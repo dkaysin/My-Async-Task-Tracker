@@ -16,4 +16,4 @@ CREATE TABLE accounts(
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-INSERT INTO accounts (user_id, name, role, password_hash) VALUES ('admin', 'admin', 'manager', '12345');
+INSERT INTO accounts (user_id, name, role, password_hash) VALUES ('admin', 'admin', 'admin', '12345');
