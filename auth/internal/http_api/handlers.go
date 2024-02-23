@@ -10,8 +10,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *HttpAPI) RegisterAPI(g *echo.Group) {
+const (
+	RoleDeveloper  = "developer"
+	RoleAdmin      = "admin"
+	RoleManager    = "manager"
+	RoleAccountant = "accountant"
+)
+
+func (h *HttpAPI) RegisterPublic(g *echo.Group) {
 	g.GET("/status", h.hello)
+	g.POST("/login", h.login)
+}
+
+func (h *HttpAPI) RegisterAPI(g *echo.Group) {
+	g.POST("/create-account", h.requireRoles(h.createAccount, []string{RoleManager, RoleAdmin}))
+	g.POST("/change-account-role", h.requireRoles(h.changeAccountRole, []string{RoleManager, RoleAdmin}))
 }
 
 func (h *HttpAPI) hello(c echo.Context) error {
