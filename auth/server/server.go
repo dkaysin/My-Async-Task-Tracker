@@ -2,7 +2,6 @@ package main
 
 import (
 	"async_course/auth"
-	global "async_course/auth"
 	database "async_course/auth/internal/database"
 	reader "async_course/auth/internal/event_reader"
 	writer "async_course/auth/internal/event_writer"
@@ -68,7 +67,7 @@ func main() {
 
 	// set event reader
 	er := reader.NewEventReader(s)
-	er.StartReaders(brokers, global.KafkaConsumerGroupID)
+	er.StartReaders(brokers, auth.KafkaConsumerGroupID)
 
 	// set http handler
 	h := httpAPI.NewHttpAPI(config, s)
