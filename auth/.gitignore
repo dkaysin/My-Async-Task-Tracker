@@ -1,0 +1,8 @@
+.DS_Store
+*.test
+*.out
+go.work
+
+bin/
+
+.env
