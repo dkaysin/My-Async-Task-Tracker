@@ -1,6 +1,10 @@
 package auth
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 // kafka
 const (
@@ -18,6 +22,11 @@ const (
 
 type AddUserReq struct {
 	UserId string `json:"user_id" validate:"required"`
+}
+
+type JwtCustomClaims struct {
+	Role string `json:"role"`
+	jwt.RegisteredClaims
 }
 
 // errors
