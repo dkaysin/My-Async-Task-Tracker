@@ -1,6 +1,7 @@
 package main
 
 import (
+	"async_course/auth"
 	global "async_course/auth"
 	database "async_course/auth/internal/database"
 	reader "async_course/auth/internal/event_reader"
@@ -11,6 +12,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -72,7 +75,19 @@ func main() {
 
 	// set server and API
 	e := echo.New()
+
+	public := e.Group("")
+	h.RegisterPublic(public)
+
 	api := e.Group("/api")
+	// parse jwt token into "user" context key
+	api.Use(echojwt.WithConfig(echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(auth.JwtCustomClaims)
+		},
+		ErrorHandler: httpAPI.JwtMiddlewareErrorHandler,
+		SigningKey:   []byte(signingKey),
+	}))
 	h.RegisterAPI(api)
 
 	// set echo logger

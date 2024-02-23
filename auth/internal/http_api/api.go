@@ -47,3 +47,7 @@ func ResponseError(err error) map[string]interface{} {
 		"error":  err.Error(),
 	}
 }
+
+func JwtMiddlewareErrorHandler(c echo.Context, err error) error {
+	return c.JSON(http.StatusForbidden, ResponseError(err))
+}
