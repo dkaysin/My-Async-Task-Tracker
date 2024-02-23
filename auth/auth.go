@@ -20,3 +20,9 @@ type AddUserReq struct {
 	UserId string `json:"user_id" validate:"required"`
 }
 
+// errors
+var ErrPayloadValidationFailed = errors.New("payload validation failed")
+var ErrInvalidCredentials = errors.New("invalid credentials")
+var ErrInvalidJwtClaimsFormat = errors.New("invalid jwt claims format")
+var ErrInsufficientPrivileges = errors.New("insufficient privileges")
+var ErrTokenNotFound = errors.New("token not found in request context")
