@@ -8,15 +8,17 @@ import (
 )
 
 type Service struct {
-	config *viper.Viper
-	db     *database.Database
-	ew     *writer.EventWriter
+	config     *viper.Viper
+	db         *database.Database
+	ew         *writer.EventWriter
+	signingKey string
 }
 
-func NewService(config *viper.Viper, db *database.Database, ew *writer.EventWriter) *Service {
+func NewService(config *viper.Viper, db *database.Database, ew *writer.EventWriter, signingKey string) *Service {
 	return &Service{
-		config: config,
-		db:     db,
-		ew:     ew,
+		config:     config,
+		db:         db,
+		ew:         ew,
+		signingKey: signingKey,
 	}
 }

@@ -40,6 +40,13 @@ func main() {
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)
 	config.SetDefault(pgConnStringEnvVar, defaultPgConnStringEnvVar)
 
+	// set signing key
+	signingKey := config.GetString(signingKeyEnvVar)
+	if signingKey == "" {
+		slog.Error("signing key not provided")
+		os.Exit(1)
+	}
+
 	// set database
 	db, err := database.NewDatabase(config.GetString(pgConnStringEnvVar))
 	if err != nil {
@@ -54,7 +61,7 @@ func main() {
 	defer ew.Close()
 
 	// set service
-	s := service.NewService(config, db, ew)
+	s := service.NewService(config, db, ew, signingKey)
 
 	// set event reader
 	er := reader.NewEventReader(s)
