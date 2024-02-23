@@ -1,8 +1,8 @@
 package service
 
 import (
-	database "async_course/main/internal/database"
-	writer "async_course/main/internal/event_writer"
+	database "async_course/auth/internal/database"
+	writer "async_course/auth/internal/event_writer"
 
 	"github.com/spf13/viper"
 )

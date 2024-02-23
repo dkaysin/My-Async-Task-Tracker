@@ -1,12 +1,12 @@
 package main
 
 import (
-	global "async_course/main"
-	database "async_course/main/internal/database"
-	reader "async_course/main/internal/event_reader"
-	writer "async_course/main/internal/event_writer"
-	httpAPI "async_course/main/internal/http_api"
-	service "async_course/main/internal/service"
+	global "async_course/auth"
+	database "async_course/auth/internal/database"
+	reader "async_course/auth/internal/event_reader"
+	writer "async_course/auth/internal/event_writer"
+	httpAPI "async_course/auth/internal/http_api"
+	service "async_course/auth/internal/service"
 	"log/slog"
 	"os"
 	"strings"
@@ -26,13 +26,15 @@ const (
 
 	pgConnStringEnvVar        = "PG_CONN_STRING"
 	defaultPgConnStringEnvVar = "postgres://dkaysin:dkaysin@127.0.0.1:5432/async_course_test"
+
+	signingKeyEnvVar = "SIGNING_KEY"
 )
 
 func main() {
 
 	// set config
 	config := viper.New()
-	config.SetEnvPrefix("MAIN")
+	config.SetEnvPrefix("AUTH")
 	config.AutomaticEnv()
 	config.SetDefault(listenAddressEnvVar, defaultListenAddress)
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)

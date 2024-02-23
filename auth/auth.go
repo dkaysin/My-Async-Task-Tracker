@@ -1,4 +1,6 @@
-package global
+package auth
+
+import "errors"
 
 // kafka
 const (
@@ -17,3 +19,4 @@ const (
 type AddUserReq struct {
 	UserId string `json:"user_id" validate:"required"`
 }
+
