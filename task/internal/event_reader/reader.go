@@ -21,6 +21,8 @@ func NewEventReader(s *service.Service) *EventReader {
 }
 
 func (er *EventReader) StartReaders(brokers []string, groupID string) {
+	topicReaderAccount := newTopicReader(brokers, groupID, task.KafkaTopicAccount)
+	go handle(context.Background(), topicReaderAccount, er.handleMessageJSON)
 }
 
 func newTopicReader(brokers []string, groupID string, topic string) *kafka.Reader {
