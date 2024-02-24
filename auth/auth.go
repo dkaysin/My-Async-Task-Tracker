@@ -1,7 +1,5 @@
 package auth
 
-import "errors"
-
 // kafka
 const (
 	KafkaConsumerGroupID = "my-consumer-group-id"
@@ -19,4 +17,3 @@ const (
 type AddUserReq struct {
 	UserId string `json:"user_id" validate:"required"`
 }
-
