@@ -39,7 +39,3 @@ type Task struct {
 
 // errors
 var ErrPayloadValidationFailed = errors.New("payload validation failed")
-var ErrInvalidJwtClaimsFormat = errors.New("invalid jwt claims format")
-var ErrInsufficientPrivileges = errors.New("insufficient privileges")
-var ErrTokenNotFound = errors.New("token not found in request context")
-var ErrTaskNotFound = errors.New("task not found")

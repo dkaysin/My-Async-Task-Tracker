@@ -37,7 +37,7 @@ func validatePayload[T any](c echo.Context) (T, error) {
 	return payload, nil
 }
 
-func ResponseOK(data interface{}) map[string]interface{} {
+func ResponseOK(v interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"status": "ok",
 		"data":   data,
