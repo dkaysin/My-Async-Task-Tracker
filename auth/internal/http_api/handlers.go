@@ -7,9 +7,9 @@ import (
 )
 
 func (h *HttpAPI) RegisterAPI(g *echo.Group) {
-	g.GET("/status", h.hello)
+	g.GET("/status", h.status)
 }
 
-func (h *HttpAPI) hello(c echo.Context) error {
+func (h *HttpAPI) status(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
