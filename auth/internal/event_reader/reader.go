@@ -1,7 +1,6 @@
 package event_reader
 
 import (
-	"async_course/auth"
 	"async_course/auth/internal/service"
 	"context"
 	"encoding/json"
@@ -18,18 +17,6 @@ type EventReader struct {
 
 func NewEventReader(s *service.Service) *EventReader {
 	return &EventReader{s}
-}
-
-func (er *EventReader) StartReaders(brokers []string, groupID string) {
-
-	// topic A
-	topicAReader := newTopicReader(brokers, groupID, auth.KafkaTopicIDA)
-	go handle(context.Background(), topicAReader, er.handleMessageJSON)
-
-	// topic B
-	topicBReader := newTopicReader(brokers, groupID, auth.KafkaTopicIDB)
-	go handle(context.Background(), topicBReader, er.handleMessageJSON)
-
 }
 
 func newTopicReader(brokers []string, groupID string, topic string) *kafka.Reader {
