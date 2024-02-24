@@ -10,7 +10,7 @@ func (s *Service) getActiveAccountsByRole(ctx context.Context, role string) ([]s
 	var userIDs []string
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `SELECT user_id FROM accounts WHERE role = $1 AND active`
+		q := `SELECT user_id FROM task_accounts WHERE role = $1 AND active`
 		rows, err := tx.Query(ctx, q, role)
 		if err != nil {
 			return err
@@ -27,7 +27,7 @@ func (s *Service) getActiveAccountsByRole(ctx context.Context, role string) ([]s
 
 func (s *Service) UpsertAccountRole(ctx context.Context, userID string, active bool, role string) error {
 	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		q := `INSERT INTO accounts (user_id, active, role) VALUES ($1, $2, $3)
+		q := `INSERT INTO task_accounts (user_id, active, role) VALUES ($1, $2, $3)
 			ON CONFLICT (user_id) DO UPDATE SET actvie = $2, role = $3`
 		_, err := tx.Exec(ctx, q, userID, active, role)
 		return err
