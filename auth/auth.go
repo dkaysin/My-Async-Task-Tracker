@@ -6,6 +6,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	RoleDeveloper  = "developer"
+	RoleAdmin      = "admin"
+	RoleManager    = "manager"
+	RoleAccountant = "accountant"
+)
+
 // kafka
 const (
 	KafkaConsumerGroupID = "my-consumer-group-id"

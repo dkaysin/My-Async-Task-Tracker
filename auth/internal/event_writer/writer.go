@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
-	"os"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -19,13 +18,6 @@ func newTopicWriter(brokers []string, topic string) *TopicWriter {
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	}}
-}
-
-func (er *EventWriter) Close() {
-	if err := er.TopicWriterAccount.w.Close(); err != nil {
-		slog.Error("failed to close writer", "error", err)
-		os.Exit(1)
-	}
 }
 
 func (tr *TopicWriter) WriteBytes(ctx context.Context, key string, value []byte) error {
