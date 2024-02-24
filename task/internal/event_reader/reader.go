@@ -1,7 +1,6 @@
 package event_reader
 
 import (
-	"async_course/task"
 	"async_course/task/internal/service"
 	"context"
 	"encoding/json"

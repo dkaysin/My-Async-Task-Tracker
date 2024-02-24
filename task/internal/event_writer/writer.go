@@ -1,24 +1,19 @@
 package event_writer
 
 import (
-	"async_course/task"
 	"context"
 	"encoding/json"
 	"log/slog"
-	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
-type EventWriter struct {
-}
-
 type TopicWriter struct {
+	w *kafka.Writer
 }
 
 func NewEventWriter(brokers []string) *EventWriter {
-	return &EventWriter{
-	}
+	return &EventWriter{}
 }
 
 func newTopicWriter(brokers []string, topic string) *TopicWriter {
@@ -27,13 +22,6 @@ func newTopicWriter(brokers []string, topic string) *TopicWriter {
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	}}
-}
-
-func (er *EventWriter) Close() {
-	if err := er.TopicWriterTask.w.Close(); err != nil {
-		slog.Error("failed to close writer", "error", err)
-		os.Exit(1)
-	}
 }
 
 func (tr *TopicWriter) WriteBytes(ctx context.Context, key string, value []byte) error {

@@ -11,8 +11,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
-	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -28,6 +26,8 @@ const (
 
 	pgConnStringEnvVar        = "PG_CONN_STRING"
 	defaultPgConnStringEnvVar = "postgres://postgres:postgres@127.0.0.1:5432/postgres"
+
+	signingKeyEnvVar = "SIGNING_KEY"
 )
 
 func main() {
@@ -39,6 +39,13 @@ func main() {
 	config.SetDefault(listenAddressEnvVar, defaultListenAddress)
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)
 	config.SetDefault(pgConnStringEnvVar, defaultPgConnStringEnvVar)
+
+	// set signing key
+	signingKey := config.GetString(signingKeyEnvVar)
+	if signingKey == "" {
+		slog.Error("signing key not provided")
+		os.Exit(1)
+	}
 
 	// set database
 	db, err := database.NewDatabase(config.GetString(pgConnStringEnvVar))

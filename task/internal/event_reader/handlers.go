@@ -1,8 +1,6 @@
 package event_reader
 
 import (
-	"async_course/task"
-
 	"github.com/segmentio/kafka-go"
 )
 
