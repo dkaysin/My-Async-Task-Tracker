@@ -5,4 +5,4 @@ go.work
 
 bin/
 
-.env
+*.env
