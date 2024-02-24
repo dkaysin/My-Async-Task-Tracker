@@ -1,6 +1,5 @@
 version: "3"
 services:
-
   zoo1:
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo1
@@ -11,8 +10,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zoo1:2888:3888
-    profiles:
-      [pg_docker, pg_local, kafka]
+    profiles: [pg_docker, pg_local, kafka]
 
   kafka1:
     image: confluentinc/cp-kafka:7.3.2
@@ -38,8 +36,7 @@ services:
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
     depends_on:
       - zoo1
-    profiles:
-      [pg_docker, pg_local, kafka]
+    profiles: [pg_docker, pg_local, kafka]
 
   db:
     image: postgres:alpine
@@ -58,20 +55,33 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
-    profiles:
-      [pg_docker]
+    profiles: [pg_docker]
 
   auth:
-      build:
-        context: ./auth
-        dockerfile: Dockerfile
-      container_name: async-course-auth
-      env_file:
-        - ./auth/docker.env
-      ports:
-        - 4080:4080
-      depends_on:
-        - zoo1
-        - kafka1
-      profiles:
-        [pg_docker, pg_local, services]
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    container_name: async-course-auth
+    env_file:
+      - ./auth/docker.env
+    ports:
+      - 4080:4080
+    depends_on:
+      - zoo1
+      - kafka1
+    profiles: [pg_docker, pg_local, services]
+
+  task:
+    build:
+      context: ./task
+      dockerfile: Dockerfile
+    container_name: async-course-task
+    env_file:
+      - ./task/docker.env
+    ports:
+      - 4081:4080
+    depends_on:
+      - zoo1
+      - kafka1
+    profiles: [pg_docker, pg_local, services]
+

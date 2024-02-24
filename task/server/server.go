@@ -1,12 +1,12 @@
 package main
 
 import (
-	"async_course/auth"
-	database "async_course/auth/internal/database"
-	reader "async_course/auth/internal/event_reader"
-	writer "async_course/auth/internal/event_writer"
-	httpAPI "async_course/auth/internal/http_api"
-	service "async_course/auth/internal/service"
+	"async_course/task"
+	database "async_course/task/internal/database"
+	reader "async_course/task/internal/event_reader"
+	writer "async_course/task/internal/event_writer"
+	httpAPI "async_course/task/internal/http_api"
+	service "async_course/task/internal/service"
 	"log/slog"
 	"os"
 	"strings"
@@ -28,26 +28,17 @@ const (
 
 	pgConnStringEnvVar        = "PG_CONN_STRING"
 	defaultPgConnStringEnvVar = "postgres://postgres:postgres@127.0.0.1:5432/postgres"
-
-	signingKeyEnvVar = "SIGNING_KEY"
 )
 
 func main() {
 
 	// set config
 	config := viper.New()
-	config.SetEnvPrefix("AUTH")
+	config.SetEnvPrefix("TASK")
 	config.AutomaticEnv()
 	config.SetDefault(listenAddressEnvVar, defaultListenAddress)
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)
 	config.SetDefault(pgConnStringEnvVar, defaultPgConnStringEnvVar)
-
-	// set signing key
-	signingKey := config.GetString(signingKeyEnvVar)
-	if signingKey == "" {
-		slog.Error("signing key not provided")
-		os.Exit(1)
-	}
 
 	// set database
 	db, err := database.NewDatabase(config.GetString(pgConnStringEnvVar))
@@ -67,7 +58,7 @@ func main() {
 
 	// set event reader
 	er := reader.NewEventReader(s)
-	er.StartReaders(brokers, auth.KafkaConsumerGroupID)
+	er.StartReaders(brokers, task.KafkaConsumerGroupID)
 
 	// set http handler
 	h := httpAPI.NewHttpAPI(config, s)
@@ -79,14 +70,6 @@ func main() {
 	h.RegisterPublic(public)
 
 	api := e.Group("/api")
-	// parse jwt token into "user" context key
-	api.Use(echojwt.WithConfig(echojwt.Config{
-		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(auth.JwtCustomClaims)
-		},
-		ErrorHandler: httpAPI.JwtMiddlewareErrorHandler,
-		SigningKey:   []byte(signingKey),
-	}))
 	h.RegisterAPI(api)
 
 	// set echo logger
