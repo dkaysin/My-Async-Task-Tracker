@@ -1,16 +1,18 @@
 package main
 
 import (
-	global "async_course/auth"
-	database "async_course/auth/internal/database"
-	reader "async_course/auth/internal/event_reader"
-	writer "async_course/auth/internal/event_writer"
-	httpAPI "async_course/auth/internal/http_api"
-	service "async_course/auth/internal/service"
+	"async_course/task"
+	database "async_course/task/internal/database"
+	reader "async_course/task/internal/event_reader"
+	writer "async_course/task/internal/event_writer"
+	httpAPI "async_course/task/internal/http_api"
+	service "async_course/task/internal/service"
 	"log/slog"
 	"os"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -26,15 +28,13 @@ const (
 
 	pgConnStringEnvVar        = "PG_CONN_STRING"
 	defaultPgConnStringEnvVar = "postgres://postgres:postgres@127.0.0.1:5432/postgres"
-
-	signingKeyEnvVar = "SIGNING_KEY"
 )
 
 func main() {
 
 	// set config
 	config := viper.New()
-	config.SetEnvPrefix("AUTH")
+	config.SetEnvPrefix("TASK")
 	config.AutomaticEnv()
 	config.SetDefault(listenAddressEnvVar, defaultListenAddress)
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)
@@ -54,17 +54,21 @@ func main() {
 	defer ew.Close()
 
 	// set service
-	s := service.NewService(config, db, ew)
+	s := service.NewService(config, db, ew, signingKey)
 
 	// set event reader
 	er := reader.NewEventReader(s)
-	er.StartReaders(brokers, global.KafkaConsumerGroupID)
+	er.StartReaders(brokers, task.KafkaConsumerGroupID)
 
 	// set http handler
 	h := httpAPI.NewHttpAPI(config, s)
 
 	// set server and API
 	e := echo.New()
+
+	public := e.Group("")
+	h.RegisterPublic(public)
+
 	api := e.Group("/api")
 	h.RegisterAPI(api)
 
