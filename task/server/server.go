@@ -28,6 +28,8 @@ const (
 
 	pgConnStringEnvVar        = "PG_CONN_STRING"
 	defaultPgConnStringEnvVar = "postgres://postgres:postgres@127.0.0.1:5432/postgres"
+
+	signingKeyEnvVar = "SIGNING_KEY"
 )
 
 func main() {
@@ -39,6 +41,13 @@ func main() {
 	config.SetDefault(listenAddressEnvVar, defaultListenAddress)
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)
 	config.SetDefault(pgConnStringEnvVar, defaultPgConnStringEnvVar)
+
+	// set signing key
+	signingKey := config.GetString(signingKeyEnvVar)
+	if signingKey == "" {
+		slog.Error("signing key not provided")
+		os.Exit(1)
+	}
 
 	// set database
 	db, err := database.NewDatabase(config.GetString(pgConnStringEnvVar))
@@ -70,6 +79,14 @@ func main() {
 	h.RegisterPublic(public)
 
 	api := e.Group("/api")
+	// parse jwt token into "user" context key
+	api.Use(echojwt.WithConfig(echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(task.JwtCustomClaims)
+		},
+		ErrorHandler: httpAPI.JwtMiddlewareErrorHandler,
+		SigningKey:   []byte(signingKey),
+	}))
 	h.RegisterAPI(api)
 
 	// set echo logger
