@@ -1,7 +1,6 @@
 package event_writer
 
 import (
-	"async_course/auth"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -10,20 +9,8 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type EventWriter struct {
-	TopicAWriter *TopicWriter
-	TopicBWriter *TopicWriter
-}
-
 type TopicWriter struct {
 	w *kafka.Writer
-}
-
-func NewEventWriter(brokers []string) *EventWriter {
-	return &EventWriter{
-		TopicAWriter: newTopicWriter(brokers, auth.KafkaTopicIDA),
-		TopicBWriter: newTopicWriter(brokers, auth.KafkaTopicIDB),
-	}
 }
 
 func newTopicWriter(brokers []string, topic string) *TopicWriter {
