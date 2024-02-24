@@ -22,7 +22,7 @@ func newTopicWriter(brokers []string, topic string) *TopicWriter {
 }
 
 func (er *EventWriter) Close() {
-	if err := er.TopicAWriter.w.Close(); err != nil {
+	if err := er.TopicWriterAccount.w.Close(); err != nil {
 		slog.Error("failed to close writer", "error", err)
 		os.Exit(1)
 	}

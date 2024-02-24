@@ -1,13 +1,13 @@
 package event_writer
 
-import "async_course/auth"
+import "async_course/task"
 
 type EventWriter struct {
-	TopicWriterAccount *TopicWriter
+	TopicWriterTask *TopicWriter
 }
 
 func NewEventWriter(brokers []string) *EventWriter {
 	return &EventWriter{
-		TopicWriterAccount: newTopicWriter(brokers, auth.KafkaTopicAccount),
+		TopicWriterTask: newTopicWriter(brokers, task.KafkaTopicTask),
 	}
 }
