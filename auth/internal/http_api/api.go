@@ -3,7 +3,6 @@ package http_handler
 import (
 	"async_course/auth"
 	service "async_course/auth/internal/service"
-	"net/http"
 
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
@@ -29,19 +28,19 @@ func validatePayload[T any](c echo.Context) (T, error) {
 	}
 	validate := validator.New()
 	if err := validate.Struct(payload); err != nil {
-		return payload, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return payload, auth.ErrPayloadValidationFailed
 	}
 	return payload, nil
 }
 
-func responseOK(v interface{}) map[string]interface{} {
+func ResponseOK(v interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"status": "ok",
 		"data":   v,
 	}
 }
 
-func responseError(err error) map[string]interface{} {
+func ResponseError(err error) map[string]interface{} {
 	return map[string]interface{}{
 		"status": "error",
 		"error":  err,
