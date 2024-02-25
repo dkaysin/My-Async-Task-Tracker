@@ -57,6 +57,7 @@ func (s *Service) getClaimsForAccount(ctx context.Context, userID string) (auth.
 		return tx.QueryRow(ctx, q, userID).Scan(&role)
 	})
 	return auth.JwtCustomClaims{
-		Role: role,
+		UserID: userID,
+		Role:   role,
 	}, err
 }

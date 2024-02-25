@@ -37,6 +37,24 @@ func validatePayload[T any](c echo.Context) (T, error) {
 	return payload, nil
 }
 
+func getClaimsFromContext(c echo.Context) (*task.JwtCustomClaims, error) {
+	token, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		slog.Error("could not find jwt token in request context", "error", task.ErrTokenNotFound)
+		return nil, c.JSON(http.StatusInternalServerError, task.ErrTokenNotFound)
+	}
+	claims, ok := token.Claims.(*task.JwtCustomClaims)
+	if !ok {
+		slog.Error("cannot cast to *jwtClaims", "error", task.ErrInvalidJwtClaimsFormat)
+		return nil, c.JSON(http.StatusForbidden, task.ErrInvalidJwtClaimsFormat)
+	}
+	if claims == nil {
+		slog.Error("empty claims in provided token", "error", task.ErrInvalidJwtClaimsFormat)
+		return nil, c.JSON(http.StatusForbidden, task.ErrInvalidJwtClaimsFormat)
+	}
+	return claims, nil
+}
+
 func ResponseOK(data interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"status": "ok",
@@ -57,23 +75,10 @@ func JwtMiddlewareErrorHandler(c echo.Context, err error) error {
 
 func (h *HttpAPI) requireRoles(fn echo.HandlerFunc, roles []string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		token, ok := c.Get("user").(*jwt.Token)
-		if !ok {
-			slog.Error("could not find jwt token in request context", "error", task.ErrTokenNotFound)
-			return c.JSON(http.StatusInternalServerError, task.ErrTokenNotFound)
+		claims, err := getClaimsFromContext(c)
+		if err != nil {
+			return err
 		}
-
-		claims, ok := token.Claims.(*task.JwtCustomClaims)
-		if !ok {
-			slog.Error("cannot cast to *jwtClaims", "error", task.ErrInvalidJwtClaimsFormat)
-			return c.JSON(http.StatusForbidden, task.ErrInvalidJwtClaimsFormat)
-		}
-
-		if claims == nil {
-			slog.Error("empty claims in provided token", "error", task.ErrInvalidJwtClaimsFormat)
-			return c.JSON(http.StatusForbidden, task.ErrInvalidJwtClaimsFormat)
-		}
-
 		role := claims.Role
 		if !slices.Contains(roles, role) {
 			return c.JSON(http.StatusForbidden, ResponseError(task.ErrInsufficientPrivileges))

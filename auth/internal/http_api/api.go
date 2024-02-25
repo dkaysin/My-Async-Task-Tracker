@@ -74,8 +74,10 @@ func (h *HttpAPI) requireRoles(fn echo.HandlerFunc, roles []string) echo.Handler
 			return c.JSON(http.StatusForbidden, auth.ErrInvalidJwtClaimsFormat)
 		}
 
-		role := claims.Role
-		if !slices.Contains(roles, role) {
+		// add to context
+		c.Set("claims", claims)
+
+		if !slices.Contains(roles, claims.Role) {
 			return c.JSON(http.StatusForbidden, ResponseError(auth.ErrInsufficientPrivileges))
 		}
 		return fn(c)

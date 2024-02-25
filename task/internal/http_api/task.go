@@ -57,7 +57,6 @@ func (h *HttpAPI) createTask(c echo.Context) error {
 
 type completeTaskReq struct {
 	TaskID string `json:"task_id" validate:"required"`
-	UserID string `json:"user_id" validate:"required"`
 }
 
 func (h *HttpAPI) completeTask(c echo.Context) error {
@@ -65,7 +64,13 @@ func (h *HttpAPI) completeTask(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError(err))
 	}
-	err = h.s.CompleteTask(context.Background(), payload.TaskID, payload.UserID)
+
+	claims, err := getClaimsFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	err = h.s.CompleteTask(context.Background(), payload.TaskID, claims.UserID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError(err))
 	}

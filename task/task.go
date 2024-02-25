@@ -25,7 +25,8 @@ const (
 // cross-package types
 
 type JwtCustomClaims struct {
-	Role string `json:"role"`
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
