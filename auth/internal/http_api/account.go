@@ -10,13 +10,13 @@ import (
 // create account
 
 type createAccountReq struct {
-	Name         string `json:"name"`
-	PasswordHash string `json:"password_hash"`
-	Role         string `json:"role"`
+	Name         string `json:"name" validate:"required"`
+	PasswordHash string `json:"password_hash" validate:"required"`
+	Role         string `json:"role" validate:"required"`
 }
 
 type createAccountRes struct {
-	UserID string `json:"user_id"`
+	UserID string `json:"user_id" validate:"required"`
 }
 
 func (h *HttpAPI) createAccount(c echo.Context) error {
@@ -34,8 +34,8 @@ func (h *HttpAPI) createAccount(c echo.Context) error {
 // change account role
 
 type changeAccountRoleReq struct {
-	UserID  string `json:"user_id"`
-	NewRole string `json:"new_role"`
+	UserID  string `json:"user_id" validate:"required"`
+	NewRole string `json:"new_role" validate:"required"`
 }
 
 func (h *HttpAPI) changeAccountRole(c echo.Context) error {

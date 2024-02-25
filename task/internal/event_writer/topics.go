@@ -15,6 +15,7 @@ func NewEventWriter(brokers []string) *EventWriter {
 		TopicWriterTask: newTopicWriter(brokers, task.KafkaTopicTask),
 	}
 }
+
 func (er *EventWriter) Close() {
 	if err := er.TopicWriterTask.w.Close(); err != nil {
 		slog.Error("failed to close writer", "error", err)

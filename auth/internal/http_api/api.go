@@ -3,7 +3,6 @@ package http_handler
 import (
 	"async_course/auth"
 	service "async_course/auth/internal/service"
-	"async_course/task"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -29,11 +28,11 @@ func NewHttpAPI(config *viper.Viper, s *service.Service) *HttpAPI {
 func validatePayload[T any](c echo.Context) (T, error) {
 	var payload T
 	if err := c.Bind(&payload); err != nil {
-		return payload, task.ErrPayloadValidationFailed
+		return payload, auth.ErrPayloadValidationFailed
 	}
 	validate := validator.New()
 	if err := validate.Struct(payload); err != nil {
-		return payload, task.ErrPayloadValidationFailed
+		return payload, auth.ErrPayloadValidationFailed
 	}
 	return payload, nil
 }

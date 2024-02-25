@@ -19,7 +19,7 @@ func (s *Service) CreateAccount(ctx context.Context, name, passwordHash, role st
 		return "", err
 	}
 	event := auth.NewEventAccountCreated(userID, role)
-	s.ew.TopicWriterAccount.WriteJSON(context.Background(), auth.EventKeyAccountCreated, event)
+	s.ew.TopicWriterAccount.WriteJSON(context.Background(), event.Key, event.Value)
 	return userID, nil
 }
 
@@ -27,7 +27,7 @@ func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string)
 	var active bool
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		q := `UPDATE accounts SET role = $2, updated_at = NOW() WHERE user_id = $1
-			RETURNING actvie`
+			RETURNING active`
 		err := tx.QueryRow(ctx, q, userID, newRole).Scan(&active)
 		if err == pgx.ErrNoRows {
 			return auth.ErrAccountNotFound
@@ -38,6 +38,6 @@ func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string)
 		return err
 	}
 	event := auth.NewEventAccountUpdated(userID, newRole, active)
-	s.ew.TopicWriterAccount.WriteJSON(context.Background(), auth.EventKeyAccountCreated, event)
+	s.ew.TopicWriterAccount.WriteJSON(context.Background(), event.Key, event.Value)
 	return nil
 }

@@ -11,19 +11,19 @@ import (
 // get tasks
 
 type getTasksReq struct {
-	UserID string `json:"userID"`
+	UserID string `json:"userID" validate:"required"`
 }
 
 type getTasksRes struct {
 	Tasks []task.Task `json:"tasks"`
 }
 
-func (h *HttpAPI) getTasks(c echo.Context) error {
+func (h *HttpAPI) getAccountTasks(c echo.Context) error {
 	payload, err := validatePayload[getTasksReq](c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError(err))
 	}
-	tasks, err := h.s.GetTasks(context.Background(), payload.UserID)
+	tasks, err := h.s.GetTasksForAccount(context.Background(), payload.UserID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError(err))
 	}
@@ -33,11 +33,12 @@ func (h *HttpAPI) getTasks(c echo.Context) error {
 // create task
 
 type createTaskReq struct {
-	Description string `json:"description"`
+	Description string `json:"description" validate:"required"`
 }
 
 type createTaskRes struct {
-	TaskID string `json:"task_id"`
+	TaskID string  `json:"task_id"`
+	UserID *string `json:"user_id"`
 }
 
 func (h *HttpAPI) createTask(c echo.Context) error {
@@ -45,18 +46,18 @@ func (h *HttpAPI) createTask(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError(err))
 	}
-	taskID, err := h.s.CreateTask(context.Background(), payload.Description)
+	taskID, userID, err := h.s.CreateTask(context.Background(), payload.Description)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError(err))
 	}
-	return c.JSON(http.StatusOK, ResponseOK(createTaskRes{taskID}))
+	return c.JSON(http.StatusOK, ResponseOK(createTaskRes{taskID, userID}))
 }
 
 // complete task
 
 type completeTaskReq struct {
-	TaskID string `json:"task_id"`
-	UserID string `json:"user_id"`
+	TaskID string `json:"task_id" validate:"required"`
+	UserID string `json:"user_id" validate:"required"`
 }
 
 func (h *HttpAPI) completeTask(c echo.Context) error {

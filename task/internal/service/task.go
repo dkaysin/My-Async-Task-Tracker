@@ -9,11 +9,16 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Service) GetTasks(ctx context.Context, userID string) ([]task.Task, error) {
+type TaskUserID struct {
+	TaskID string  `json:"task_id"`
+	UserID *string `json:"user_id"`
+}
+
+func (s *Service) GetTasksForAccount(ctx context.Context, userID string) ([]task.Task, error) {
 	var tasks []task.Task
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `SELECT task_id, description, completed, created_at WHERE user_id = $1`
+		q := `SELECT task_id, user_id, description, completed, created_at WHERE user_id = $1`
 		rows, err := tx.Query(ctx, q, userID)
 		if err != nil {
 			return err
@@ -28,17 +33,38 @@ func (s *Service) GetTasks(ctx context.Context, userID string) ([]task.Task, err
 	return tasks, nil
 }
 
-func (s *Service) CreateTask(ctx context.Context, description string) (string, error) {
+func (s *Service) CreateTask(ctx context.Context, description string) (string, *string, error) {
 	taskID := uuid.New().String()
-	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		q := `INSERT INTO tasks (task_id, description, completed) VALUES ($1, $2, False)`
-		_, err := tx.Exec(ctx, q, taskID, description)
+
+	userIDs, err := s.getActiveAccountsByRole(ctx, task.RoleDeveloper)
+	if err != nil {
+		return "", nil, err
+	}
+	var userID *string
+	if !(len(userIDs) == 0) {
+		userID = &userIDs[rand.IntN(len(userIDs))]
+	}
+
+	var createdTask task.Task
+	err = s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		q := `INSERT INTO tasks (task_id, user_id, description, completed) VALUES ($1, $2, $3, False)
+			RETURNING task_id, user_id, description, completed, created_at`
+		rows, err := tx.Query(ctx, q, taskID, userID, description)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		createdTask, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[task.Task])
 		return err
 	})
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return taskID, nil
+	if userID != nil {
+		event := task.NewEventTaskAssigned(createdTask, nil)
+		s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
+	}
+	return taskID, userID, nil
 }
 
 func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error {
@@ -57,28 +83,34 @@ func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error
 		}
 		return err
 	})
-	event := task.NewEventTaskCompleted(completedTask)
-	s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
-	return err
-}
-
-func (s *Service) AssignTasks(ctx context.Context) error {
-	taskIDs, err := s.getUnassignedTasks(ctx)
 	if err != nil {
 		return err
 	}
+	event := task.NewEventTaskCompleted(completedTask)
+	s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
+	return nil
+}
+
+func (s *Service) AssignTasks(ctx context.Context) error {
 	developerIDs, err := s.getActiveAccountsByRole(ctx, task.RoleDeveloper)
 	if err != nil {
 		return err
 	}
+	if len(developerIDs) == 0 {
+		return task.ErrNoDevelopersAvailable
+	}
+	taskUserIDs, err := s.getNonCompletedTasks(ctx)
+	if err != nil {
+		return err
+	}
 
-	for _, taskID := range taskIDs {
+	for _, taskUserID := range taskUserIDs {
 		n := rand.IntN(len(developerIDs))
 		developerID := developerIDs[n]
 		var assignedTask task.Task
 		err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 			var err error
-			assignedTask, err = s.assignTaskTx(tx, ctx, taskID, developerID)
+			assignedTask, err = s.assignTaskTx(tx, ctx, taskUserID.TaskID, developerID)
 			if err != nil {
 				return err
 			}
@@ -87,29 +119,29 @@ func (s *Service) AssignTasks(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		event := task.NewEventTaskCompleted(assignedTask)
+		event := task.NewEventTaskAssigned(assignedTask, taskUserID.UserID)
 		s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
 	}
 	return nil
 }
 
-func (s *Service) getUnassignedTasks(ctx context.Context) ([]string, error) {
-	var taskIDs []string
+func (s *Service) getNonCompletedTasks(ctx context.Context) ([]TaskUserID, error) {
+	var assignedTasks []TaskUserID
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `SELECT task_id FROM tasks WHERE user_id IS NULL AND NOT completed`
+		q := `SELECT task_id, user_id FROM tasks WHERE NOT completed`
 		rows, err := tx.Query(ctx, q)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
-		taskIDs, err = pgx.CollectRows(rows, pgx.RowTo[string])
+		assignedTasks, err = pgx.CollectRows(rows, pgx.RowToStructByName[TaskUserID])
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	return taskIDs, nil
+	return assignedTasks, nil
 }
 
 func (s *Service) assignTaskTx(tx pgx.Tx, ctx context.Context, taskID, userID string) (task.Task, error) {

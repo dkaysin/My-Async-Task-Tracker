@@ -8,7 +8,7 @@ import (
 )
 
 func (er *EventReader) handleAccountCreated(m kafka.Message) error {
-	payload, err := validatePayload[task.EventValueAccountCreateAccount](m)
+	payload, err := validatePayload[task.EventValueAccountCreated](m)
 	if err != nil {
 		return err
 	}

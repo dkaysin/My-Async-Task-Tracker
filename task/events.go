@@ -9,21 +9,29 @@ type Event struct {
 
 const EventKeyTaskAssigned = "Task.Assigned"
 
-func NewEventTaskAssigned(task Task) Event {
+func NewEventTaskAssigned(task Task, oldUserID *string) Event {
 	return Event{
-		Key:   EventKeyTaskAssigned,
-		Value: task,
+		Key: EventKeyTaskAssigned,
+		Value: EventValueTaskAssigned{
+			Task:      task,
+			OldUserID: oldUserID,
+		},
 	}
+}
+
+type EventValueTaskAssigned struct {
+	Task
+	OldUserID *string `json:"old_user_id"`
 }
 
 // Task.Completed
 
 const EventKeyTaskCompleted = "Task.Completed"
 
-func NewEventTaskCompleted(task Task) Event {
+func NewEventTaskCompleted(value Task) Event {
 	return Event{
 		Key:   EventKeyTaskCompleted,
-		Value: task,
+		Value: value,
 	}
 }
 
@@ -31,7 +39,7 @@ func NewEventTaskCompleted(task Task) Event {
 
 const EventKeyAccountCreated = "Account.Created"
 
-type EventValueAccountCreateAccount struct {
+type EventValueAccountCreated struct {
 	UserID string `json:"user_id"`
 	Role   string `json:"role"`
 }
