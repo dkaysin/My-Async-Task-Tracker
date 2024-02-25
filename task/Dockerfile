@@ -1,11 +1,15 @@
-FROM --platform=linux/amd64 golang:1.22-alpine3.19
+FROM golang:1.22-alpine3.19
 
 WORKDIR /go/app
 
-COPY . .
+COPY ./go.mod ./go.mod
+COPY ./go.sum ./go.sum
 
 RUN apk add --no-cache make
 RUN go mod download
+
+COPY . .
+
 RUN make build
 
 EXPOSE 4080
