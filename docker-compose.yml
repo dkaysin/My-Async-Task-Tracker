@@ -10,7 +10,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zoo1:2888:3888
-    profiles: [pg_docker, pg_local, kafka]
+    profiles: [all, pg_local, kafka]
 
   kafka1:
     image: confluentinc/cp-kafka:7.3.2
@@ -36,8 +36,28 @@ services:
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
     depends_on:
       - zoo1
-    profiles: [pg_docker, pg_local, kafka]
+    profiles: [all, pg_local, kafka]
+  
+  init-kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: async-course-init-kafka
+    depends_on:
+      - kafka1
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka1:29092 --list
 
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka1:29092 --create --if-not-exists --topic Account --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka1:29092 --create --if-not-exists --topic Task --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server kafka1:29092 --list
+      "
+    profiles: [all, pg_local, kafka]
+  
   db:
     image: postgres:alpine
     restart: always
@@ -55,7 +75,7 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
-    profiles: [pg_docker]
+    profiles: [all]
 
   auth:
     build:
@@ -66,10 +86,7 @@ services:
       - ./auth/docker.env
     ports:
       - 4080:4080
-    depends_on:
-      - zoo1
-      - kafka1
-    profiles: [pg_docker, pg_local, services]
+    profiles: [all, pg_local, services]
 
   task:
     build:
@@ -80,8 +97,5 @@ services:
       - ./task/docker.env
     ports:
       - 4081:4080
-    depends_on:
-      - zoo1
-      - kafka1
-    profiles: [pg_docker, pg_local, services]
+    profiles: [all, pg_local, services]
 
