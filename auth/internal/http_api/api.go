@@ -37,6 +37,24 @@ func validatePayload[T any](c echo.Context) (T, error) {
 	return payload, nil
 }
 
+func getClaimsFromContext(c echo.Context) (*auth.JwtCustomClaims, error) {
+	token, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		slog.Error("could not find jwt token in request context", "error", auth.ErrTokenNotFound)
+		return nil, c.JSON(http.StatusInternalServerError, auth.ErrTokenNotFound)
+	}
+	claims, ok := token.Claims.(*auth.JwtCustomClaims)
+	if !ok {
+		slog.Error("cannot cast to *jwtClaims", "error", auth.ErrInvalidJwtClaimsFormat)
+		return nil, c.JSON(http.StatusForbidden, auth.ErrInvalidJwtClaimsFormat)
+	}
+	if claims == nil {
+		slog.Error("empty claims in provided token", "error", auth.ErrInvalidJwtClaimsFormat)
+		return nil, c.JSON(http.StatusForbidden, auth.ErrInvalidJwtClaimsFormat)
+	}
+	return claims, nil
+}
+
 func ResponseOK(data interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"status": "ok",
@@ -57,30 +75,14 @@ func JwtMiddlewareErrorHandler(c echo.Context, err error) error {
 
 func (h *HttpAPI) requireRoles(fn echo.HandlerFunc, roles []string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		token, ok := c.Get("user").(*jwt.Token)
-		if !ok {
-			slog.Error("could not find jwt token in request context", "error", auth.ErrTokenNotFound)
-			return c.JSON(http.StatusInternalServerError, auth.ErrTokenNotFound)
+		claims, err := getClaimsFromContext(c)
+		if err != nil {
+			return err
 		}
-
-		claims, ok := token.Claims.(*auth.JwtCustomClaims)
-		if !ok {
-			slog.Error("cannot cast to *jwtClaims", "error", auth.ErrInvalidJwtClaimsFormat)
-			return c.JSON(http.StatusForbidden, auth.ErrInvalidJwtClaimsFormat)
-		}
-
-		if claims == nil {
-			slog.Error("empty claims in provided token", "error", auth.ErrInvalidJwtClaimsFormat)
-			return c.JSON(http.StatusForbidden, auth.ErrInvalidJwtClaimsFormat)
-		}
-
-		// add to context
-		c.Set("claims", claims)
-
-		if !slices.Contains(roles, claims.Role) {
+		role := claims.Role
+		if !slices.Contains(roles, role) {
 			return c.JSON(http.StatusForbidden, ResponseError(auth.ErrInsufficientPrivileges))
 		}
 		return fn(c)
 	}
-
 }

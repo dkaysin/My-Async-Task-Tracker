@@ -85,5 +85,4 @@ func (h *HttpAPI) requireRoles(fn echo.HandlerFunc, roles []string) echo.Handler
 		}
 		return fn(c)
 	}
-
 }

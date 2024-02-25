@@ -18,7 +18,7 @@ func (s *Service) GetTasksForAccount(ctx context.Context, userID string) ([]task
 	var tasks []task.Task
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `SELECT task_id, user_id, description, completed, created_at WHERE user_id = $1`
+		q := `SELECT task_id, user_id, description, completed, created_at FROM tasks WHERE user_id = $1`
 		rows, err := tx.Query(ctx, q, userID)
 		if err != nil {
 			return err

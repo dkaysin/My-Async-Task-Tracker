@@ -10,20 +10,22 @@ import (
 
 // get tasks
 
-type getTasksReq struct {
-	UserID string `json:"userID" validate:"required"`
-}
-
 type getTasksRes struct {
 	Tasks []task.Task `json:"tasks"`
 }
 
-func (h *HttpAPI) getAccountTasks(c echo.Context) error {
-	payload, err := validatePayload[getTasksReq](c)
+func (h *HttpAPI) getTasks(c echo.Context) error {
+	claims, err := getClaimsFromContext(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError(err))
+		return err
 	}
-	tasks, err := h.s.GetTasksForAccount(context.Background(), payload.UserID)
+
+	userID := c.Param("user_id")
+	if userID == "" {
+		userID = claims.UserID
+	}
+
+	tasks, err := h.s.GetTasksForAccount(context.Background(), userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError(err))
 	}
