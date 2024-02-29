@@ -62,7 +62,7 @@ func (s *Service) CreateTask(ctx context.Context, description string) (string, *
 	}
 	if userID != nil {
 		event := task.NewEventTaskAssigned(createdTask, nil)
-		s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
+		s.ew.TopicWriterTask.WriteJSON(event.Key, event.Value)
 	}
 	return taskID, userID, nil
 }
@@ -87,7 +87,7 @@ func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error
 		return err
 	}
 	event := task.NewEventTaskCompleted(completedTask)
-	s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
+	s.ew.TopicWriterTask.WriteJSON(event.Key, event.Value)
 	return nil
 }
 
@@ -120,7 +120,7 @@ func (s *Service) AssignTasks(ctx context.Context) error {
 			return err
 		}
 		event := task.NewEventTaskAssigned(assignedTask, taskUserID.UserID)
-		s.ew.TopicWriterTask.WriteJSON(context.Background(), event.Key, event.Value)
+		s.ew.TopicWriterTask.WriteJSON(event.Key, event.Value)
 	}
 	return nil
 }

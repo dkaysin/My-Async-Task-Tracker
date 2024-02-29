@@ -19,7 +19,7 @@ func (s *Service) CreateAccount(ctx context.Context, name, passwordHash, role st
 		return "", err
 	}
 	event := auth.NewEventAccountCreated(userID, role)
-	s.ew.TopicWriterAccount.WriteJSON(context.Background(), event.Key, event.Value)
+	s.ew.TopicWriterAccount.WriteJSON(event.Key, event.Value)
 	return userID, nil
 }
 
@@ -38,6 +38,6 @@ func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string)
 		return err
 	}
 	event := auth.NewEventAccountUpdated(userID, newRole, active)
-	s.ew.TopicWriterAccount.WriteJSON(context.Background(), event.Key, event.Value)
+	s.ew.TopicWriterAccount.WriteJSON(event.Key, event.Value)
 	return nil
 }
