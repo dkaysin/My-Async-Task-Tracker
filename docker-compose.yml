@@ -37,13 +37,13 @@ services:
     depends_on:
       - zoo1
     profiles: [all, pg_local, kafka]
-  
+
   init-kafka:
     image: confluentinc/cp-kafka:7.3.2
     container_name: async-course-init-kafka
     depends_on:
       - kafka1
-    entrypoint: [ '/bin/sh', '-c' ]
+    entrypoint: ["/bin/sh", "-c"]
     command: |
       "
       # blocks until kafka is reachable
@@ -57,7 +57,7 @@ services:
       kafka-topics --bootstrap-server kafka1:29092 --list
       "
     profiles: [all, pg_local, kafka]
-  
+
   db:
     image: postgres:alpine
     restart: always
@@ -79,8 +79,8 @@ services:
 
   auth:
     build:
-      context: ./auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: auth/Dockerfile
     container_name: async-course-auth
     env_file:
       - ./auth/docker.env
@@ -90,12 +90,11 @@ services:
 
   task:
     build:
-      context: ./task
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: task/Dockerfile
     container_name: async-course-task
     env_file:
       - ./task/docker.env
     ports:
       - 4081:4080
     profiles: [all, pg_local, services]
-

@@ -7,6 +7,8 @@ import (
 	writer "async_course/auth/internal/event_writer"
 	httpAPI "async_course/auth/internal/http_api"
 	service "async_course/auth/internal/service"
+	schema "async_course/schema_registry"
+
 	"log/slog"
 	"os"
 	"strings"
@@ -57,16 +59,19 @@ func main() {
 	}
 	defer db.Close()
 
+	// set schema registry
+	sr := schema.NewSchemaRegistry(auth.ProducerName)
+
 	// set event writer
 	brokers := strings.Split(config.GetString(kafkaBrokersEnvVar), ",")
-	ew := writer.NewEventWriter(brokers)
+	ew := writer.NewEventWriter(brokers, sr)
 	defer ew.Close()
 
 	// set service
 	s := service.NewService(config, db, ew, signingKey)
 
 	// set event reader
-	er := reader.NewEventReader(s)
+	er := reader.NewEventReader(s, sr)
 	er.StartReaders(brokers, auth.KafkaConsumerGroupID)
 
 	// set http handler

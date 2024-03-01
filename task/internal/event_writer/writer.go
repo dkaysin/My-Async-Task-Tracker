@@ -1,8 +1,9 @@
 package event_writer
 
 import (
+	schema "async_course/schema_registry"
+
 	"context"
-	"encoding/json"
 	"log/slog"
 	"time"
 
@@ -28,27 +29,36 @@ func (tr *TopicWriter) WriteBytes(key string, value []byte) error {
 	go func(ctx context.Context, key string, value []byte) {
 		err := tr.w.WriteMessages(ctx, kafka.Message{
 			Key:   []byte(key),
-			Value: []byte(value),
+			Value: value,
 		})
 		if err != nil {
-			slog.Error("failed to write message", "topic", tr.w.Topic, "key", key, "value", value, "error", err)
 			return
 		}
-		slog.Info("written message", "topic", tr.w.Topic, "key", key, "value", value)
 
 	}(ctx, key, value)
 	return nil
 }
 
-func (tr *TopicWriter) WriteString(key string, value string) error {
-	return tr.WriteBytes(key, []byte(value))
-}
-
-func (tr *TopicWriter) WriteJSON(key string, value any) error {
-	valueBytes, err := json.Marshal(value)
+func (tr *TopicWriter) WriteMessage(m schema.Message) error {
+	payloadBytes, err := schema.MarshalAndValidate(m.Event.PayloadSchema, m.Event.Payload)
 	if err != nil {
-		slog.Error("failed to marshall payload", "topic", tr.w.Topic, "key", key, "value", value, "error", err)
+		slog.Error("failed to marshall payload", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Event.EventName, "event_version", m.Event.EventVersion, "error", err)
 		return err
 	}
-	return tr.WriteBytes(key, valueBytes)
+	eventRaw := schema.EventRaw{
+		Meta:    m.Event.Meta,
+		Payload: payloadBytes,
+	}
+	eventBytes, err := schema.MarshalAndValidate(schema.EventSchema, eventRaw)
+	if err != nil {
+		slog.Error("failed to marshall event", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Event.EventName, "event_version", m.Event.EventVersion, "error", err)
+		return err
+	}
+	err = tr.WriteBytes(m.Key, eventBytes)
+	if err != nil {
+		slog.Error("error while writing message", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Event.EventName, "event_version", m.Event.EventVersion, "error", err)
+		return err
+	}
+	slog.Info("written message", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Event.EventName, "event_version", m.Event.EventVersion)
+	return nil
 }

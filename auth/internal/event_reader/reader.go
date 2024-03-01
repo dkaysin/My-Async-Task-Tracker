@@ -2,6 +2,7 @@ package event_reader
 
 import (
 	"async_course/auth/internal/service"
+	schema "async_course/schema_registry"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -12,11 +13,12 @@ import (
 )
 
 type EventReader struct {
-	s *service.Service
+	s              *service.Service
+	SchemaRegistry *schema.SchemaRegistry
 }
 
-func NewEventReader(s *service.Service) *EventReader {
-	return &EventReader{s}
+func NewEventReader(s *service.Service, sr *schema.SchemaRegistry) *EventReader {
+	return &EventReader{s, sr}
 }
 
 func newTopicReader(brokers []string, groupID string, topic string) *kafka.Reader {

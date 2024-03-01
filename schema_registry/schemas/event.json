@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "value",
+  "namespace": "event",
+  "fields": [
+    { "name": "event_name", "type": "string" },
+    { "name": "event_id", "type": "string" },
+    { "name": "event_version", "type": "string" },
+    { "name": "event_producer", "type": "string" },
+    { "name": "payload", "type": "bytes" }
+  ]
+}

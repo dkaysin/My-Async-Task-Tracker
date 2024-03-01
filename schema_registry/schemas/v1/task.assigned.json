@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "task.assigned",
+  "namespace": "event",
+  "fields": [
+    {
+      "name": "task",
+      "type": {
+        "name": "task",
+        "type": "record",
+        "fields": [
+          { "name": "task_id", "type": "string" },
+          { "name": "user_id", "type": "string" },
+          { "name": "description", "type": "string" },
+          { "name": "completed", "type": "boolean" },
+          { "name": "created_at", "type": "string" }
+        ]
+      }
+    },
+    { "name": "old_user_id", "type": ["string", "null"] }
+  ]
+}

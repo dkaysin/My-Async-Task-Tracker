@@ -20,6 +20,8 @@ const (
 	KafkaTopicAccount = "Account"
 )
 
+const ProducerName = "Auth"
+
 // cross-package types
 
 type JwtCustomClaims struct {
