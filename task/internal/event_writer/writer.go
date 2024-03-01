@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -17,8 +18,8 @@ func newTopicWriter(brokers []string, topic string) *TopicWriter {
 		Addr:         kafka.TCP(brokers...),
 		Topic:        topic,
 		Balancer:     &kafka.LeastBytes{},
-		BatchSize:    50, // should be suitable for our case
-		BatchTimeout: 10, // should be suitable for our case
+		BatchSize:    50,                    // should be suitable for our case
+		BatchTimeout: time.Millisecond * 10, // should be suitable for our case
 	}}
 }
 
