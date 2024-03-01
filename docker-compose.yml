@@ -98,3 +98,14 @@ services:
     ports:
       - 4081:4080
     profiles: [all, pg_local, services]
+
+  accounting:
+    build:
+      context: .
+      dockerfile: accounting/Dockerfile
+    container_name: async-course-accounting
+    env_file:
+      - ./accounting/docker.env
+    ports:
+      - 4082:4080
+    profiles: [all, pg_local, services]

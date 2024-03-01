@@ -1,6 +1,4 @@
 go 1.22.0
 
-use ./auth
-use ./task
 use ./accounting
 use ./schema_registry
