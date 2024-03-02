@@ -16,7 +16,7 @@ const (
 
 // kafka
 const (
-	KafkaConsumerGroupID = "my-consumer-group-id"
+	KafkaConsumerGroupID = "consumer-group-accounting"
 
 	KafkaTopicTask    = "Task"
 	KafkaTopicAccount = "Account"
