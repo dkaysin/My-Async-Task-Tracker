@@ -46,10 +46,13 @@ func (tr *TopicWriter) WriteMessage(m schema.Message) error {
 		return err
 	}
 	eventRaw := schema.EventRaw{
-		Meta:    m.Event.Meta,
-		Payload: payloadBytes,
+		EventName:     m.Event.EventName,
+		EventID:       m.Event.EventID,
+		EventVersion:  m.Event.EventVersion,
+		EventProducer: m.Event.EventProducer,
+		Payload:       payloadBytes,
 	}
-	eventBytes, err := schema.MarshalAndValidate(schema.EventSchema, eventRaw)
+	eventBytes, err := schema.MarshalAndValidate(schema.EventRawSchema, eventRaw)
 	if err != nil {
 		slog.Error("failed to marshall event", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Event.EventName, "event_version", m.Event.EventVersion, "error", err)
 		return err

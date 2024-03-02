@@ -1,9 +1,10 @@
 {
+  "name": "account_updated",
   "type": "record",
-  "name": "account.created",
-  "namespace": "event",
+  "namespace": "event.account",
   "fields": [
     { "name": "user_id", "type": "string" },
+    { "name": "active", "type": "boolean" },
     { "name": "role", "type": "string" }
   ]
 }

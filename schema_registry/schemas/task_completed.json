@@ -1,0 +1,6 @@
+{
+  "name": "task_completed",
+  "type": "record",
+  "namespace": "event.task",
+  "fields": [{ "name": "task", "type": "task" }]
+}

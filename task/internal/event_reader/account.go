@@ -8,7 +8,7 @@ import (
 
 func (er *EventReader) handleAccountCreated(e schema.EventRaw) error {
 	var payload schema.EventPayloadAccountCreated
-	err := schema.UnmarshalAndValidate(er.SchemaRegistry.V1.AccountCreatedSchema, e.Payload, &payload)
+	err := schema.UnmarshalAndValidate(er.SchemaRegistry.AccountCreatedSchema, e.Payload, &payload)
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,7 @@ func (er *EventReader) handleAccountCreated(e schema.EventRaw) error {
 
 func (er *EventReader) handleAccountUpdated(e schema.EventRaw) error {
 	var payload schema.EventPayloadAccountUpdated
-	err := schema.UnmarshalAndValidate(er.SchemaRegistry.V1.AccountCreatedSchema, e.Payload, &payload)
+	err := schema.UnmarshalAndValidate(er.SchemaRegistry.AccountCreatedSchema, e.Payload, &payload)
 	if err != nil {
 		return err
 	}

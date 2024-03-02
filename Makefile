@@ -9,3 +9,6 @@ up_kafka:
 
 up_services:
 	docker compose --profile services up --build
+
+avro:
+	cd schema_registry && make avro && cd ..

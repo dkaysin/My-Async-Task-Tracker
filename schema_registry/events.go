@@ -1,9 +1,8 @@
 package schema_registry
 
 import (
-	"time"
-
 	"github.com/google/uuid"
+	"github.com/hamba/avro/v2"
 )
 
 type Message struct {
@@ -11,35 +10,15 @@ type Message struct {
 	Event Event
 }
 
-type MessageRaw struct {
-	Key      string
-	EventRaw EventRaw
-}
-
 type Event struct {
 	Meta
 	Payload       interface{} `avro:"payload"`
-	PayloadSchema []byte
+	PayloadSchema avro.Schema
 }
 
-type EventRaw struct {
-	Meta
-	Payload []byte `avro:"payload"`
-}
-
-type Meta struct {
-	EventName     string `avro:"event_name"`
-	EventId       string `avro:"event_id"`
-	EventVersion  string `avro:"event_version"`
-	EventProducer string `avro:"event_producer"`
-}
-
-type Task struct {
-	TaskID      string    `json:"task_id" avro:"task_id"`
-	UserID      string    `json:"user_id" avro:"user_id"`
-	Description string    `json:"description" avro:"description"`
-	Completed   bool      `json:"completed" avro:"completed"`
-	CreatedAt   time.Time `json:"created_at" avro:"created_at"`
+type MessageRaw struct {
+	Key      string
+	EventRaw EventRaw
 }
 
 // Task.Assigned
@@ -51,13 +30,13 @@ type EventPayloadTaskAssigned struct {
 	OldUserID *string `avro:"old_user_id"`
 }
 
-func (sr *Schemas) NewEventTaskAssigned(task Task, oldUserID *string) Message {
+func (sr *SchemaRegistry) NewEventTaskAssigned(task Task, oldUserID *string) Message {
 	return Message{
 		Key: task.TaskID,
 		Event: Event{
 			Meta: Meta{
 				EventName:     EventNameTaskAssigned,
-				EventId:       uuid.New().String(),
+				EventID:       uuid.New().String(),
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
@@ -78,13 +57,13 @@ type EventPayloadTaskCompleted struct {
 	Task Task `avro:"task"`
 }
 
-func (sr *Schemas) NewEventTaskCompleted(task Task) Message {
+func (sr *SchemaRegistry) NewEventTaskCompleted(task Task) Message {
 	return Message{
 		Key: task.TaskID,
 		Event: Event{
 			Meta: Meta{
 				EventName:     EventNameTaskCompleted,
-				EventId:       uuid.New().String(),
+				EventID:       uuid.New().String(),
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
@@ -105,13 +84,13 @@ type EventPayloadAccountCreated struct {
 	Role   string `avro:"role"`
 }
 
-func (sr *Schemas) NewEventAccountCreated(userID, role string) Message {
+func (sr *SchemaRegistry) NewEventAccountCreated(userID, role string) Message {
 	return Message{
 		Key: userID,
 		Event: Event{
 			Meta: Meta{
 				EventName:     EventNameAccountCreated,
-				EventId:       uuid.New().String(),
+				EventID:       uuid.New().String(),
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
@@ -134,13 +113,13 @@ type EventPayloadAccountUpdated struct {
 	Role   string `avro:"role"`
 }
 
-func (sr *Schemas) NewEventAccountUpdated(userID, role string, active bool) Message {
+func (sr *SchemaRegistry) NewEventAccountUpdated(userID, role string, active bool) Message {
 	return Message{
 		Key: userID,
 		Event: Event{
 			Meta: Meta{
 				EventName:     EventNameAccountCreated,
-				EventId:       uuid.New().String(),
+				EventID:       uuid.New().String(),
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},

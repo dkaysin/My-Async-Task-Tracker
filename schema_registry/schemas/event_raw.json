@@ -1,6 +1,6 @@
 {
+  "name": "event_raw",
   "type": "record",
-  "name": "value",
   "namespace": "event",
   "fields": [
     { "name": "event_name", "type": "string" },

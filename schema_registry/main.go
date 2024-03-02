@@ -10,40 +10,31 @@ import (
 )
 
 type SchemaRegistry struct {
-	V1 Schemas
-}
-
-type Schemas struct {
 	Producer             string
-	AccountCreatedSchema []byte
-	AccountUpdatedSchema []byte
-	TaskAssignedSchema   []byte
-	TaskCompletedSchema  []byte
+	AccountCreatedSchema avro.Schema
+	AccountUpdatedSchema avro.Schema
+	TaskAssignedSchema   avro.Schema
+	TaskCompletedSchema  avro.Schema
 }
 
 func NewSchemaRegistry(producer string) *SchemaRegistry {
 	return &SchemaRegistry{
-		V1: Schemas{
-			Producer:             producer,
-			AccountCreatedSchema: mustReadSchema("v1/", "account.created.json"),
-			AccountUpdatedSchema: mustReadSchema("v1/", "account.updated.json"),
-			TaskAssignedSchema:   mustReadSchema("v1/", "task.assigned.json"),
-			TaskCompletedSchema:  mustReadSchema("v1/", "task.completed.json"),
-		},
+		Producer:             producer,
+		AccountCreatedSchema: mustReadSchema("account_created.json"),
+		AccountUpdatedSchema: mustReadSchema("account_updated.json"),
+		TaskAssignedSchema:   mustReadSchemaWithDeps("task_assigned.json", "", map[string]string{"task": "task.json"}),
+		TaskCompletedSchema:  mustReadSchemaWithDeps("task_completed.json", "", map[string]string{"task": "task.json"}),
 	}
 }
 
-//go:embed schemas/v1/* schemas/event.json
+const schemaFilesPrefix = "schemas/"
+
+//go:embed schemas/*.json
 var f embed.FS
 
-var EventSchema = mustReadSchema("", "event.json")
+var EventRawSchema = mustReadSchema("event_raw.json")
 
-func MarshalAndValidate(schemaBytes []byte, v interface{}) ([]byte, error) {
-	schema, err := avro.ParseBytes(schemaBytes)
-	if err != nil {
-		slog.Error("unable to parse schema", "error", err)
-		return nil, err
-	}
+func MarshalAndValidate(schema avro.Schema, v interface{}) ([]byte, error) {
 	bytes, err := avro.Marshal(schema, v)
 	if err != nil {
 		slog.Error("error while marshalling to avro bytes", "error", err)
@@ -52,13 +43,8 @@ func MarshalAndValidate(schemaBytes []byte, v interface{}) ([]byte, error) {
 	return bytes, nil
 }
 
-func UnmarshalAndValidate(schemaBytes []byte, bytes []byte, v interface{}) error {
-	schema, err := avro.ParseBytes(schemaBytes)
-	if err != nil {
-		slog.Error("unable to parse schema", "error", err)
-		return err
-	}
-	err = avro.Unmarshal(schema, bytes, &v)
+func UnmarshalAndValidate(schema avro.Schema, bytes []byte, v interface{}) error {
+	err := avro.Unmarshal(schema, bytes, &v)
 	if err != nil {
 		slog.Error("error while unmarshalling from avro bytes", "error", err)
 		return err
@@ -66,12 +52,47 @@ func UnmarshalAndValidate(schemaBytes []byte, bytes []byte, v interface{}) error
 	return nil
 }
 
-func mustReadSchema(version, file string) []byte {
-	path := fmt.Sprintf("schemas/%s%s", version, file)
+func mustReadSchema(file string) avro.Schema {
+	path := fmt.Sprintf("%s%s", schemaFilesPrefix, file)
 	bytes, err := f.ReadFile(path)
 	if err != nil {
 		slog.Error("error while reading from file", "file", file, "error", err)
 		os.Exit(1)
 	}
-	return bytes
+	schema, err := avro.ParseBytes(bytes)
+	if err != nil {
+		slog.Error("error while parsing avro schema", "file", file, "error", err)
+		os.Exit(1)
+	}
+	return schema
+}
+func mustReadSchemaWithDeps(file, namespace string, deps map[string]string) avro.Schema {
+	cache := &avro.SchemaCache{}
+	for name, fileDep := range deps {
+		path := fmt.Sprintf("%s%s", schemaFilesPrefix, fileDep)
+		bytes, err := f.ReadFile(path)
+		if err != nil {
+			slog.Error("error while reading from file", "file", file, "error", err)
+			os.Exit(1)
+		}
+		schema, err := avro.ParseBytesWithCache(bytes, namespace, cache)
+		if err != nil {
+			slog.Error("error while parsing avro schema", "file", file, "error", err)
+			os.Exit(1)
+		}
+		cache.Add(name, schema)
+	}
+
+	path := fmt.Sprintf("%s%s", schemaFilesPrefix, file)
+	bytes, err := f.ReadFile(path)
+	if err != nil {
+		slog.Error("error while reading from file", "file", file, "error", err)
+		os.Exit(1)
+	}
+	schema, err := avro.ParseBytesWithCache(bytes, namespace, cache)
+	if err != nil {
+		slog.Error("error while parsing avro schema", "file", file, "error", err)
+		os.Exit(1)
+	}
+	return schema
 }

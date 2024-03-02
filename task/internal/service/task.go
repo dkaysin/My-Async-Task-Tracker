@@ -63,7 +63,7 @@ func (s *Service) CreateTask(ctx context.Context, description string) (string, *
 		return "", nil, err
 	}
 	if userID != nil {
-		message := s.ew.SchemaRegistry.V1.NewEventTaskAssigned(schema.Task(createdTask), nil)
+		message := s.ew.SchemaRegistry.NewEventTaskAssigned(schema.Task(createdTask), nil)
 		s.ew.TopicWriterTask.WriteMessage(message)
 	}
 	return taskID, userID, nil
@@ -88,7 +88,7 @@ func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error
 	if err != nil {
 		return err
 	}
-	message := s.ew.SchemaRegistry.V1.NewEventTaskCompleted(schema.Task(completedTask))
+	message := s.ew.SchemaRegistry.NewEventTaskCompleted(schema.Task(completedTask))
 	s.ew.TopicWriterTask.WriteMessage(message)
 	return nil
 }
@@ -126,7 +126,7 @@ func (s *Service) AssignTasks(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		message := s.ew.SchemaRegistry.V1.NewEventTaskAssigned(schema.Task(assignedTask), taskUserID.UserID)
+		message := s.ew.SchemaRegistry.NewEventTaskAssigned(schema.Task(assignedTask), taskUserID.UserID)
 		s.ew.TopicWriterTask.WriteMessage(message)
 	}
 	return nil
