@@ -8,7 +8,7 @@ import (
 )
 
 func (er *EventReader) handleTaskAssigned(e schema.EventRaw) error {
-	var payload schema.EventPayloadTaskAssigned
+	var payload schema.TaskAssigned
 	err := schema.UnmarshalAndValidate(er.SchemaRegistry.TaskAssignedSchema, e.Payload, &payload)
 	if err != nil {
 		return err
@@ -21,7 +21,7 @@ func (er *EventReader) handleTaskAssigned(e schema.EventRaw) error {
 }
 
 func (er *EventReader) handleTaskCompleted(e schema.EventRaw) error {
-	var payload schema.EventPayloadTaskCompleted
+	var payload schema.TaskCompleted
 	err := schema.UnmarshalAndValidate(er.SchemaRegistry.TaskCompletedSchema, e.Payload, &payload)
 	if err != nil {
 		return err

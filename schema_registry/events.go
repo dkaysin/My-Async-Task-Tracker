@@ -1,6 +1,8 @@
 package schema_registry
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/hamba/avro/v2"
 )
@@ -25,11 +27,6 @@ type MessageRaw struct {
 
 const EventNameTaskAssigned = "Task.Assigned"
 
-type EventPayloadTaskAssigned struct {
-	Task      Task    `avro:"task"`
-	OldUserID *string `avro:"old_user_id"`
-}
-
 func (sr *SchemaRegistry) NewEventTaskAssigned(task Task, oldUserID *string) Message {
 	return Message{
 		Key: task.TaskID,
@@ -40,7 +37,7 @@ func (sr *SchemaRegistry) NewEventTaskAssigned(task Task, oldUserID *string) Mes
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
-			Payload: EventPayloadTaskAssigned{
+			Payload: TaskAssigned{
 				Task:      task,
 				OldUserID: oldUserID,
 			},
@@ -53,10 +50,6 @@ func (sr *SchemaRegistry) NewEventTaskAssigned(task Task, oldUserID *string) Mes
 
 const EventNameTaskCompleted = "Task.Completed"
 
-type EventPayloadTaskCompleted struct {
-	Task Task `avro:"task"`
-}
-
 func (sr *SchemaRegistry) NewEventTaskCompleted(task Task) Message {
 	return Message{
 		Key: task.TaskID,
@@ -67,7 +60,7 @@ func (sr *SchemaRegistry) NewEventTaskCompleted(task Task) Message {
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
-			Payload: EventPayloadTaskCompleted{
+			Payload: TaskCompleted{
 				Task: task,
 			},
 			PayloadSchema: sr.TaskCompletedSchema,
@@ -79,11 +72,6 @@ func (sr *SchemaRegistry) NewEventTaskCompleted(task Task) Message {
 
 const EventNameAccountCreated = "Account.Created"
 
-type EventPayloadAccountCreated struct {
-	UserID string `avro:"user_id"`
-	Role   string `avro:"role"`
-}
-
 func (sr *SchemaRegistry) NewEventAccountCreated(userID, role string) Message {
 	return Message{
 		Key: userID,
@@ -94,7 +82,7 @@ func (sr *SchemaRegistry) NewEventAccountCreated(userID, role string) Message {
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
-			Payload: EventPayloadAccountCreated{
+			Payload: AccountCreated{
 				UserID: userID,
 				Role:   role,
 			},
@@ -107,12 +95,6 @@ func (sr *SchemaRegistry) NewEventAccountCreated(userID, role string) Message {
 
 const EventNameAccountUpdated = "Account.Updated"
 
-type EventPayloadAccountUpdated struct {
-	UserID string `avro:"user_id"`
-	Active bool   `avro:"active"`
-	Role   string `avro:"role"`
-}
-
 func (sr *SchemaRegistry) NewEventAccountUpdated(userID, role string, active bool) Message {
 	return Message{
 		Key: userID,
@@ -123,7 +105,7 @@ func (sr *SchemaRegistry) NewEventAccountUpdated(userID, role string, active boo
 				EventVersion:  "1",
 				EventProducer: sr.Producer,
 			},
-			Payload: EventPayloadAccountUpdated{
+			Payload: AccountUpdated{
 				UserID: userID,
 				Role:   role,
 				Active: active,

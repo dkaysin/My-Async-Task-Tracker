@@ -20,8 +20,8 @@ func (s *Service) CreateAccount(ctx context.Context, name, passwordHash, role st
 		return "", err
 	}
 	message := s.ew.SchemaRegistry.NewEventAccountCreated(userID, role)
-	s.ew.TopicWriterAccount.WriteMessage(message)
-	return userID, nil
+	err = s.ew.TopicWriterAccount.WriteMessage(message)
+	return userID, err
 }
 
 func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string) error {
@@ -39,6 +39,5 @@ func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string)
 		return err
 	}
 	message := s.ew.SchemaRegistry.NewEventAccountUpdated(userID, newRole, active)
-	s.ew.TopicWriterAccount.WriteMessage(message)
-	return nil
+	return s.ew.TopicWriterAccount.WriteMessage(message)
 }
