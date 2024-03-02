@@ -11,6 +11,7 @@ func (h *HttpAPI) RegisterPublic(g *echo.Group) {
 }
 
 func (h *HttpAPI) RegisterAPI(g *echo.Group) {
+	// no public REST API
 }
 
 func (h *HttpAPI) status(c echo.Context) error {
