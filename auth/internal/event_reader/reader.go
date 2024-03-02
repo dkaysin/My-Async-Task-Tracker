@@ -3,12 +3,11 @@ package event_reader
 import (
 	"async_course/auth/internal/service"
 	schema "async_course/schema_registry"
+
 	"context"
-	"encoding/json"
 	"log/slog"
 	"os"
 
-	"github.com/go-playground/validator"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -53,18 +52,4 @@ func handle(ctx context.Context, r *kafka.Reader, fn messageHandler) {
 			slog.Error("error while handling message", "error", err)
 		}
 	}
-}
-
-func validatePayload[T any](m kafka.Message) (T, error) {
-	var payload T
-	if err := json.Unmarshal(m.Value, &payload); err != nil {
-		slog.Error("error while unmarshaling payload", "key", string(m.Key), "value", string(m.Value), "error", err)
-		return payload, err
-	}
-	validate := validator.New()
-	if err := validate.Struct(payload); err != nil {
-		slog.Error("error while validating payload", "key", string(m.Key), "value", string(m.Value), "error", err)
-		return payload, err
-	}
-	return payload, nil
 }
