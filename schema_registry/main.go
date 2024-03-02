@@ -15,6 +15,7 @@ type SchemaRegistry struct {
 	AccountUpdatedSchema avro.Schema
 	TaskAssignedSchema   avro.Schema
 	TaskCompletedSchema  avro.Schema
+	PaymentMadeSchema    avro.Schema
 }
 
 func NewSchemaRegistry(producer string) *SchemaRegistry {
@@ -24,6 +25,7 @@ func NewSchemaRegistry(producer string) *SchemaRegistry {
 		AccountUpdatedSchema: mustReadSchema("account_updated.json"),
 		TaskAssignedSchema:   mustReadSchemaWithDeps("task_assigned.json", "", map[string]string{"task": "task.json"}),
 		TaskCompletedSchema:  mustReadSchemaWithDeps("task_completed.json", "", map[string]string{"task": "task.json"}),
+		PaymentMadeSchema:    mustReadSchema("payment_made.json"),
 	}
 }
 

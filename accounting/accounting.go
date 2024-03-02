@@ -20,6 +20,7 @@ const (
 
 	KafkaTopicTask    = "Task"
 	KafkaTopicAccount = "Account"
+	KafkaTopicPayment = "Payment"
 )
 
 const ProducerName = "Accounting"

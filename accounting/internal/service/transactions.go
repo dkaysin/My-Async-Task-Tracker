@@ -20,17 +20,42 @@ func (s *Service) ProcessCompleteTask(ctx context.Context, userID string) error 
 	})
 }
 
-func (s *Service) ProcessBalanceClose(ctx context.Context, userID string) error {
-	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		balance, err := getOutstandingBalance(tx, ctx, balanceTypeAccounts, userID)
+func (s *Service) InitiateBalanceClose(ctx context.Context) error {
+	return nil
+}
+
+func (s *Service) closeAccountBalance(ctx context.Context, userID string) error {
+	// close balance
+	var balance int
+	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		balance, err = getOutstandingBalance(tx, ctx, balanceTypeAccounts, userID)
 		if err != nil {
 			return err
 		}
+		// if we don't owe account money, skip
 		if balance < 0 {
 			return s.processTransactionTx(tx, ctx, newBalanceCloseTransaction(userID, -balance))
 		}
 		return nil
 	})
+	if err != nil {
+		slog.Error("error while processing balance close", "user_id", userID)
+		return err
+	}
+
+	if balance < 0 {
+		return nil
+	}
+	// process payment
+	amount := -balance
+	processedAt, err := s.processPayment(userID, amount)
+	if err != nil {
+		slog.Error("error while processing payment", "user_id", userID, "amount", amount)
+		return err
+	}
+	message := s.ew.SchemaRegistry.NewEventPaymentMade(userID, amount, processedAt)
+	return s.ew.TopicWriterPayment.WriteMessage(message)
 }
 
 const (

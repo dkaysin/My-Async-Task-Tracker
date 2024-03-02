@@ -1,0 +1,16 @@
+{
+  "name": "payment_made",
+  "type": "record",
+  "namespace": "event.payment",
+  "fields": [
+    { "name": "user_id", "type": "string" },
+    { "name": "amount", "type": "int" },
+    {
+      "name": "processed_at",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}

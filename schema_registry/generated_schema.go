@@ -36,6 +36,13 @@ type Meta struct {
 	EventProducer string `avro:"event_producer"`
 }
 
+// PaymentMade is a generated struct.
+type PaymentMade struct {
+	UserID      string    `avro:"user_id"`
+	Amount      int       `avro:"amount"`
+	ProcessedAt time.Time `avro:"processed_at"`
+}
+
 // Task is a generated struct.
 type Task struct {
 	TaskID      string    `avro:"task_id"`

@@ -114,3 +114,27 @@ func (sr *SchemaRegistry) NewEventAccountUpdated(userID, role string, active boo
 		},
 	}
 }
+
+// Payment.Made
+
+const EventNamePaymentMade = "Payment.Made"
+
+func (sr *SchemaRegistry) NewEventPaymentMade(userID string, amount int, processedAt time.Time) Message {
+	return Message{
+		Key: userID,
+		Event: Event{
+			Meta: Meta{
+				EventName:     EventNamePaymentMade,
+				EventID:       uuid.New().String(),
+				EventVersion:  "1",
+				EventProducer: sr.Producer,
+			},
+			Payload: PaymentMade{
+				UserID:      userID,
+				Amount:      amount,
+				ProcessedAt: processedAt,
+			},
+			PayloadSchema: sr.PaymentMadeSchema,
+		},
+	}
+}
