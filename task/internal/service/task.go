@@ -72,7 +72,7 @@ func (s *Service) CreateTask(ctx context.Context, description string) (string, *
 func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error {
 	var completedTask task.Task
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		q := `UPDATE tasks SET completed = True, updated_at = NOW() WHERE task_id = $1 AND user_id = $2
+		q := `UPDATE tasks SET completed = True, updated_at = NOW() WHERE task_id = $1 AND user_id = $2 AND completed = False
 			RETURNING task_id, user_id, description, completed, created_at`
 		rows, err := tx.Query(ctx, q, taskID, userID)
 		if err != nil {
@@ -109,6 +109,11 @@ func (s *Service) AssignTasks(ctx context.Context) error {
 	for _, taskUserID := range taskUserIDs {
 		n := rand.IntN(len(developerIDs))
 		developerID := developerIDs[n]
+		// skip task assign if developer did not change
+		if taskUserID.UserID != nil && *taskUserID.UserID == developerID {
+			continue
+		}
+
 		var assignedTask task.Task
 		err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 			var err error
