@@ -24,7 +24,6 @@ func newTopicReader(brokers []string, groupID string, topic string) *kafka.Reade
 		Brokers:  brokers,
 		GroupID:  groupID,
 		Topic:    topic,
-		MinBytes: 1,    // should be suitable for our case
 		MaxBytes: 10e6, // 10MB
 	})
 }
