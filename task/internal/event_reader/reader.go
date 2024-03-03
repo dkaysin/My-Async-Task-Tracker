@@ -24,11 +24,10 @@ func (er *EventReader) StartReaders(brokers []string, groupID string) {
 
 func newTopicReader(brokers []string, groupID string, topic string) *kafka.Reader {
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   brokers,
-		GroupID:   groupID,
-		Topic:     topic,
-		Partition: 0,
-		MaxBytes:  10e6, // 10MB
+		Brokers:  brokers,
+		GroupID:  groupID,
+		Topic:    topic,
+		MaxBytes: 10e6, // 10MB
 	})
 }
 

@@ -23,7 +23,7 @@ const (
 	KafkaTopicPayment = "Payment"
 )
 
-const ProducerName = "Analaytics"
+const ProducerName = "Analytics"
 
 // cross-package types
 
