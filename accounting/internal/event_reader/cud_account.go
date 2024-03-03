@@ -17,7 +17,7 @@ func (er *EventReader) handleAccountCreated(e schema.EventRaw) error {
 
 func (er *EventReader) handleAccountUpdated(e schema.EventRaw) error {
 	var payload schema.AccountUpdated
-	err := schema.UnmarshalAndValidate(er.SchemaRegistry.AccountCreatedSchema, e.Payload, &payload)
+	err := schema.UnmarshalAndValidate(er.SchemaRegistry.AccountUpdatedSchema, e.Payload, &payload)
 	if err != nil {
 		return err
 	}

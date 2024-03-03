@@ -30,5 +30,8 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 	case schema.EventNameAccountUpdated:
 		err = er.handleAccountUpdated(eventRaw)
 	}
+	if err != nil {
+		slog.Error("error while handling message", "error", err)
+	}
 	return err
 }

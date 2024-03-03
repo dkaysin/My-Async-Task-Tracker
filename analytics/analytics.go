@@ -18,12 +18,13 @@ const (
 const (
 	KafkaConsumerGroupID = "consumer-group-analytics"
 
-	KafkaTopicTask    = "Task"
-	KafkaTopicAccount = "Account"
-	KafkaTopicPayment = "Payment"
+	KafkaTopicTask        = "Task"
+	KafkaTopicAccount     = "Account"
+	KafkaTopicPayment     = "Payment"
+	KafkaTopicTransaction = "Transaction"
 )
 
-const ProducerName = "Analaytics"
+const ProducerName = "Analytics"
 
 // cross-package types
 

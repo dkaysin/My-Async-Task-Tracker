@@ -10,22 +10,26 @@ import (
 )
 
 type SchemaRegistry struct {
-	Producer             string
-	AccountCreatedSchema avro.Schema
-	AccountUpdatedSchema avro.Schema
-	TaskAssignedSchema   avro.Schema
-	TaskCompletedSchema  avro.Schema
-	PaymentMadeSchema    avro.Schema
+	Producer                 string
+	AccountCreatedSchema     avro.Schema
+	AccountUpdatedSchema     avro.Schema
+	TaskAssignedSchema       avro.Schema
+	TaskCompletedSchema      avro.Schema
+	PaymentMadeSchema        avro.Schema
+	TransactionRevenueSchema avro.Schema
+	TransactionCostSchema    avro.Schema
 }
 
 func NewSchemaRegistry(producer string) *SchemaRegistry {
 	return &SchemaRegistry{
-		Producer:             producer,
-		AccountCreatedSchema: mustReadSchema("account_created.json"),
-		AccountUpdatedSchema: mustReadSchema("account_updated.json"),
-		TaskAssignedSchema:   mustReadSchemaWithDeps("task_assigned.json", "", map[string]string{"task": "task.json"}),
-		TaskCompletedSchema:  mustReadSchemaWithDeps("task_completed.json", "", map[string]string{"task": "task.json"}),
-		PaymentMadeSchema:    mustReadSchema("payment_made.json"),
+		Producer:                 producer,
+		AccountCreatedSchema:     mustReadSchema("account_created.json"),
+		AccountUpdatedSchema:     mustReadSchema("account_updated.json"),
+		TaskAssignedSchema:       mustReadSchemaWithDeps("task_assigned.json", "", map[string]string{"task": "task.json"}),
+		TaskCompletedSchema:      mustReadSchemaWithDeps("task_completed.json", "", map[string]string{"task": "task.json"}),
+		PaymentMadeSchema:        mustReadSchema("payment_made.json"),
+		TransactionRevenueSchema: mustReadSchema("transaction_revenue.json"),
+		TransactionCostSchema:    mustReadSchema("transaction_cost.json"),
 	}
 }
 

@@ -62,3 +62,19 @@ type TaskAssigned struct {
 type TaskCompleted struct {
 	Task Task `avro:"task"`
 }
+
+// TransactionCost is a generated struct.
+type TransactionCost struct {
+	UserID    *string   `avro:"user_id"`
+	Source    string    `avro:"source"`
+	Cost      int       `avro:"cost"`
+	CreatedAt time.Time `avro:"created_at"`
+}
+
+// TransactionRevenue is a generated struct.
+type TransactionRevenue struct {
+	UserID    *string   `avro:"user_id"`
+	Source    string    `avro:"source"`
+	Revenue   int       `avro:"revenue"`
+	CreatedAt time.Time `avro:"created_at"`
+}

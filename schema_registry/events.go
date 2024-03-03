@@ -138,3 +138,59 @@ func (sr *SchemaRegistry) NewEventPaymentMade(userID string, amount int, process
 		},
 	}
 }
+
+// Transaction.Profit
+
+const EventNameTransactionRevenue = "Transaction.Revenue"
+
+func (sr *SchemaRegistry) NewEventTransactionRevenue(userID *string, taskID string, revenue int, createdAt time.Time) Message {
+	var key string
+	if userID != nil {
+		key = *userID
+	}
+	return Message{
+		Key: key,
+		Event: Event{
+			Meta: Meta{
+				EventName:     EventNameTransactionRevenue,
+				EventID:       uuid.New().String(),
+				EventVersion:  "1",
+				EventProducer: sr.Producer,
+			},
+			Payload: TransactionRevenue{
+				UserID:    userID,
+				Source:    taskID,
+				Revenue:   revenue,
+				CreatedAt: createdAt,
+			},
+			PayloadSchema: sr.TransactionRevenueSchema,
+		},
+	}
+}
+
+const EventNameTransactionCost = "Transaction.Cost"
+
+func (sr *SchemaRegistry) NewEventTransactionCost(userID *string, taskID string, cost int, createdAt time.Time) Message {
+	var key string
+	if userID != nil {
+		key = *userID
+	}
+	return Message{
+		Key: key,
+		Event: Event{
+			Meta: Meta{
+				EventName:     EventNameTransactionCost,
+				EventID:       uuid.New().String(),
+				EventVersion:  "1",
+				EventProducer: sr.Producer,
+			},
+			Payload: TransactionCost{
+				UserID:    userID,
+				Source:    taskID,
+				Cost:      cost,
+				CreatedAt: createdAt,
+			},
+			PayloadSchema: sr.TransactionCostSchema,
+		},
+	}
+}

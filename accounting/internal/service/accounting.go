@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -36,24 +37,50 @@ type transaction struct {
 	Source            string
 	Amount            int
 }
+
+type transactionResult struct {
+	UserID    *string
+	Source    string
+	Amount    int
+	CreatedAt time.Time
+}
+
 type userAmount struct {
 	UserID    string    `json:"user_id"`
 	Amount    int       `json:"amount"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (s *Service) ProcessAssignTask(ctx context.Context, userID string) error {
+func (s *Service) ProcessAssignTask(ctx context.Context, userID, taskID string) error {
 	// process assign task transaction
-	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		return s.processTransactionTx(tx, ctx, newAssignTaskTransaction(userID))
+	var res transactionResult
+	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		res, err = s.processTransactionTx(tx, ctx, newAssignTaskTransaction(userID, taskID))
+		return err
 	})
+	if err != nil {
+		slog.Error("unable to process assign task transaction", "user_id", userID, "error", err)
+		return err
+	}
+	message := s.ew.SchemaRegistry.NewEventTransactionRevenue(res.UserID, res.Source, res.Amount, res.CreatedAt)
+	return s.ew.TopicWriterTransaction.WriteMessage(message)
 }
 
-func (s *Service) ProcessCompleteTask(ctx context.Context, userID string) error {
+func (s *Service) ProcessCompleteTask(ctx context.Context, userID, taskID string) error {
 	// process complete task transaction
-	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		return s.processTransactionTx(tx, ctx, newCompleteTaskTransacion(userID))
+	var res transactionResult
+	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		var err error
+		res, err = s.processTransactionTx(tx, ctx, newCompleteTaskTransacion(userID, taskID))
+		return err
 	})
+	if err != nil {
+		slog.Error("unable to process complete task transaction", "user_id", userID, "error", err)
+		return err
+	}
+	message := s.ew.SchemaRegistry.NewEventTransactionCost(res.UserID, res.Source, res.Amount, res.CreatedAt)
+	return s.ew.TopicWriterTransaction.WriteMessage(message)
 }
 
 func (s *Service) ProcessCloseBalances(ctx context.Context) error {
@@ -73,7 +100,7 @@ func (s *Service) ProcessCloseBalances(ctx context.Context) error {
 			slog.Info("processing user balance close", "user_id", userID, "deficit", deficit)
 
 			// process balance close transaction
-			err := s.processTransactionTx(tx, ctx, newBalanceCloseTransaction(userID, deficit))
+			_, err := s.processTransactionTx(tx, ctx, newBalanceCloseTransaction(userID, deficit))
 			if err != nil {
 				return err
 			}
@@ -101,29 +128,28 @@ func (s *Service) ProcessCloseBalances(ctx context.Context) error {
 			slog.Error("error while sending payment message", "user_id", user.UserID, "processed_at", user.Timestamp, "error", err)
 			return err
 		}
-
 	}
 	return nil
 }
 
-func newAssignTaskTransaction(userID string) transaction {
+func newAssignTaskTransaction(userID, taskID string) transaction {
 	return transaction{
 		ID:                uuid.New().String(),
 		BalanceTypeDebit:  balanceTypeAccounts,
 		BalanceTypeCredit: balanceTypeProfit,
 		UserID:            &userID,
-		Source:            "task_assigned",
+		Source:            fmt.Sprintf("task_assigned_%s", taskID),
 		Amount:            priceAssignTask(),
 	}
 }
 
-func newCompleteTaskTransacion(userID string) transaction {
+func newCompleteTaskTransacion(userID, taskID string) transaction {
 	return transaction{
 		ID:                uuid.New().String(),
 		BalanceTypeDebit:  balanceTypeProfit,
 		BalanceTypeCredit: balanceTypeAccounts,
 		UserID:            &userID,
-		Source:            "task_completed",
+		Source:            fmt.Sprintf("task_completed_%s", taskID),
 		Amount:            priceCompleteTask(),
 	}
 }
@@ -141,7 +167,7 @@ func newBalanceCloseTransaction(userID string, amount int) transaction {
 
 type transactionFnTx func(pgx.Tx, context.Context, transaction) error
 
-func (s *Service) processTransactionTx(tx pgx.Tx, ctx context.Context, t transaction) error {
+func (s *Service) processTransactionTx(tx pgx.Tx, ctx context.Context, t transaction) (transactionResult, error) {
 	fns := []transactionFnTx{
 		insertDebitTransactionTx,
 		insertCreditTransactionTx,
@@ -152,10 +178,15 @@ func (s *Service) processTransactionTx(tx pgx.Tx, ctx context.Context, t transac
 		err := fn(tx, ctx, t)
 		if err != nil {
 			slog.Error("error while processing transaction", "transaction", t)
-			return err
+			return transactionResult{}, err
 		}
 	}
-	return nil
+	return transactionResult{
+		Source:    t.Source,
+		UserID:    t.UserID,
+		Amount:    t.Amount,
+		CreatedAt: time.Now().UTC(),
+	}, nil
 }
 
 func insertDebitTransactionTx(tx pgx.Tx, ctx context.Context, t transaction) error {

@@ -18,9 +18,10 @@ const (
 const (
 	KafkaConsumerGroupID = "consumer-group-accounting"
 
-	KafkaTopicTask    = "Task"
-	KafkaTopicAccount = "Account"
-	KafkaTopicPayment = "Payment"
+	KafkaTopicTask        = "Task"
+	KafkaTopicAccount     = "Account"
+	KafkaTopicPayment     = "Payment"
+	KafkaTopicTransaction = "Transaction"
 )
 
 const ProducerName = "Accounting"

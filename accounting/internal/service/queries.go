@@ -21,7 +21,7 @@ type BalanceLogEntry struct {
 type ProfitLogEntry struct {
 	Date    string `json:"date"`
 	Revenue int    `json:"revenue"`
-	Costs   int    `json:"costs"`
+	Cost    int    `json:"cost"`
 	Profit  int    `json:"profit"`
 }
 
@@ -38,9 +38,6 @@ func (s *Service) GetBalanceSummary(ctx context.Context, userID string) (Balance
 		balanceSummary, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[BalanceSummary])
 		return err
 	})
-	if err != nil {
-		return balanceSummary, err
-	}
 	return balanceSummary, err
 }
 
@@ -58,16 +55,14 @@ func (s *Service) GetBalanceLog(ctx context.Context, userID string) ([]BalanceLo
 		balanceLog, err = pgx.CollectRows(rows, pgx.RowToStructByName[BalanceLogEntry])
 		return err
 	})
-	if err != nil {
-		return nil, err
-	}
 	return balanceLog, err
 }
+
 func (s *Service) GetProfitLog(ctx context.Context) ([]ProfitLogEntry, error) {
 	var profitLog []ProfitLogEntry
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `SELECT TO_CHAR(created_at, 'YYYY-MM-DD') AS date, SUM(credit) AS revenue, SUM(debit) AS costs, SUM(credit - debit) AS profit
+		q := `SELECT TO_CHAR(created_at, 'YYYY-MM-DD') AS date, SUM(credit) AS revenue, SUM(debit) AS cost, SUM(credit - debit) AS profit
             FROM transactions WHERE balance_type = 'profit'
             GROUP BY date
             ORDER BY date DESC`
@@ -79,8 +74,5 @@ func (s *Service) GetProfitLog(ctx context.Context) ([]ProfitLogEntry, error) {
 		profitLog, err = pgx.CollectRows(rows, pgx.RowToStructByName[ProfitLogEntry])
 		return err
 	})
-	if err != nil {
-		return nil, err
-	}
 	return profitLog, err
 }
