@@ -33,11 +33,11 @@ type JwtCustomClaims struct {
 }
 
 type Task struct {
-	TaskID      string    `json:"task_id" avro:"task_id"`
-	UserID      string    `json:"user_id" avro:"user_id"`
-	Description string    `json:"description" avro:"description"`
-	Completed   bool      `json:"completed" avro:"completed"`
-	CreatedAt   time.Time `json:"created_at" avro:"created_at"`
+	TaskID      string    `json:"task_id"`
+	UserID      string    `json:"user_id"`
+	Description string    `json:"description"`
+	Completed   bool      `json:"completed"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // errors

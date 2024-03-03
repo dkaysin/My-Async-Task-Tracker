@@ -2,7 +2,6 @@ package accounting
 
 import (
 	"errors"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -32,14 +31,6 @@ type JwtCustomClaims struct {
 	UserID string `json:"user_id"`
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
-}
-
-type Task struct {
-	TaskID      string    `json:"task_id" avro:"task_id"`
-	UserID      string    `json:"user_id" avro:"user_id"`
-	Description string    `json:"description" avro:"description"`
-	Completed   bool      `json:"completed" avro:"completed"`
-	CreatedAt   time.Time `json:"created_at" avro:"created_at"`
 }
 
 // errors
