@@ -9,7 +9,6 @@ func (er *EventReader) StartReaders(brokers []string, groupID string) {
 
 func (er *EventReader) handleMessageJSON(m kafka.Message) error {
 	switch string(m.Key) {
-	// handle incoming events
 	}
 	return nil
 }

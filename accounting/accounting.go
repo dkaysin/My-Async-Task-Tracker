@@ -22,7 +22,7 @@ const (
 	KafkaTopicAccount = "Account"
 )
 
-const ProducerName = "Task"
+const ProducerName = "Accounting"
 
 // cross-package types
 
