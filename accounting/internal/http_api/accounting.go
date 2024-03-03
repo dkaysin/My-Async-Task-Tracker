@@ -39,8 +39,8 @@ func (h *HttpAPI) getProfitLog(c echo.Context) error {
 	return c.JSON(http.StatusOK, ResponseOK(profitLog))
 }
 
-func (h *HttpAPI) closeBalance(c echo.Context) error {
-	err := h.s.InitiateBalanceClose(context.Background())
+func (h *HttpAPI) closeBalances(c echo.Context) error {
+	err := h.s.ProcessCloseBalances(context.Background())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError(err))
 	}

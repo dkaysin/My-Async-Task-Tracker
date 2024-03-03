@@ -3,61 +3,25 @@ package service
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Service) ProcessAssignTask(ctx context.Context, userID string) error {
-	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		return s.processTransactionTx(tx, ctx, newAssignTaskTransaction(userID))
-	})
-}
-
-func (s *Service) ProcessCompleteTask(ctx context.Context, userID string) error {
-	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		return s.processTransactionTx(tx, ctx, newCompleteTaskTransacion(userID))
-	})
-}
-
-func (s *Service) InitiateBalanceClose(ctx context.Context) error {
-	return nil
-}
-
-func (s *Service) closeAccountBalance(ctx context.Context, userID string) error {
-	// close balance
-	var balance int
-	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		var err error
-		balance, err = getOutstandingBalance(tx, ctx, balanceTypeAccounts, userID)
-		if err != nil {
-			return err
-		}
-		// if we don't owe account money, skip
-		if balance < 0 {
-			return s.processTransactionTx(tx, ctx, newBalanceCloseTransaction(userID, -balance))
-		}
-		return nil
-	})
-	if err != nil {
-		slog.Error("error while processing balance close", "user_id", userID)
-		return err
-	}
-
-	if balance < 0 {
-		return nil
-	}
-	// process payment
-	amount := -balance
-	processedAt, err := s.processPayment(userID, amount)
-	if err != nil {
-		slog.Error("error while processing payment", "user_id", userID, "amount", amount)
-		return err
-	}
-	message := s.ew.SchemaRegistry.NewEventPaymentMade(userID, amount, processedAt)
-	return s.ew.TopicWriterPayment.WriteMessage(message)
-}
-
+// balance types
+//
+// accounts:
+// - debit - user owes company money
+// - credit - company owes user money
+//
+// cash:
+// - debit - company's cash increases
+// - credit - company's cash decreases
+//
+// profit:
+// - debit - cost incurred
+// - credit - revenue earned
 const (
 	balanceTypeAccounts = "accounts"
 	balanceTypeCash     = "cash"
@@ -72,8 +36,75 @@ type transaction struct {
 	Source            string
 	Amount            int
 }
+type userAmount struct {
+	UserID    string    `json:"user_id"`
+	Amount    int       `json:"amount"`
+	Timestamp time.Time `json:"timestamp"`
+}
 
-type transactinFnTx func(pgx.Tx, context.Context, transaction) error
+func (s *Service) ProcessAssignTask(ctx context.Context, userID string) error {
+	// process assign task transaction
+	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		return s.processTransactionTx(tx, ctx, newAssignTaskTransaction(userID))
+	})
+}
+
+func (s *Service) ProcessCompleteTask(ctx context.Context, userID string) error {
+	// process complete task transaction
+	return s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		return s.processTransactionTx(tx, ctx, newCompleteTaskTransacion(userID))
+	})
+}
+
+func (s *Service) ProcessCloseBalances(ctx context.Context) error {
+	var processedUsers []userAmount
+	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
+		// get list of users to whom we owe money
+		usersWithDeficit, err := getUsersWithBalanceDeficitTx(tx, ctx, "accounts")
+		if err != nil {
+			return err
+		}
+		for _, userWithDeficit := range usersWithDeficit {
+			userID := userWithDeficit.UserID
+			deficit := userWithDeficit.Amount
+			if deficit <= 0 {
+				continue
+			}
+			slog.Info("processing user balance close", "user_id", userID, "deficit", deficit)
+
+			// process balance close transaction
+			err := s.processTransactionTx(tx, ctx, newBalanceCloseTransaction(userID, deficit))
+			if err != nil {
+				return err
+			}
+
+			// pay money to user and save payment timestamp
+			processedAt, err := s.processPayment(userID, deficit)
+			if err != nil {
+				slog.Error("error while processing payment", "user_id", userID, "amount", deficit)
+				return err
+			}
+
+			processedUsers = append(processedUsers, userAmount{userID, deficit, processedAt})
+		}
+		return nil
+	})
+	if err != nil {
+		slog.Error("error while closing balances", "error", err)
+		return err
+	}
+	// send event messages for payments made
+	for _, user := range processedUsers {
+		message := s.ew.SchemaRegistry.NewEventPaymentMade(user.UserID, user.Amount, user.Timestamp)
+		err = s.ew.TopicWriterPayment.WriteMessage(message)
+		if err != nil {
+			slog.Error("error while sending payment message", "user_id", user.UserID, "processed_at", user.Timestamp, "error", err)
+			return err
+		}
+
+	}
+	return nil
+}
 
 func newAssignTaskTransaction(userID string) transaction {
 	return transaction{
@@ -103,13 +134,15 @@ func newBalanceCloseTransaction(userID string, amount int) transaction {
 		BalanceTypeDebit:  balanceTypeAccounts,
 		BalanceTypeCredit: balanceTypeCash,
 		UserID:            &userID,
-		Source:            "balance_close",
+		Source:            "balance_closed",
 		Amount:            amount,
 	}
 }
 
+type transactionFnTx func(pgx.Tx, context.Context, transaction) error
+
 func (s *Service) processTransactionTx(tx pgx.Tx, ctx context.Context, t transaction) error {
-	fns := []transactinFnTx{
+	fns := []transactionFnTx{
 		insertDebitTransactionTx,
 		insertCreditTransactionTx,
 		updateBalanceDebitTx,
@@ -153,12 +186,14 @@ func updateBalanceCreditTx(tx pgx.Tx, ctx context.Context, t transaction) error 
 	return err
 }
 
-func getOutstandingBalance(tx pgx.Tx, ctx context.Context, balanceType, userID string) (int, error) {
-	q := `SELECT debit - credit FROM balances WHERE balance_type = $1, user_id = $2`
-	var balance int
-	err := tx.QueryRow(ctx, q, balanceType, userID).Scan(&balance)
-	if err == pgx.ErrNoRows {
-		return 0, nil
+func getUsersWithBalanceDeficitTx(tx pgx.Tx, ctx context.Context, balanceType string) ([]userAmount, error) {
+	var userAmounts []userAmount
+	q := `SELECT user_id, -(debit - credit) AS amount, NOW() as timestamp FROM balances WHERE balance_type = $1 AND debit - credit < 0`
+	rows, err := tx.Query(ctx, q, balanceType)
+	if err != nil {
+		return userAmounts, err
 	}
-	return balance, err
+	defer rows.Close()
+	userAmounts, err = pgx.CollectRows(rows, pgx.RowToStructByName[userAmount])
+	return userAmounts, err
 }
