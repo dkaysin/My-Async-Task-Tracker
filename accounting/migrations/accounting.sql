@@ -4,12 +4,6 @@
 
 CREATE TYPE balance_type AS ENUM ('accounts', 'cash', 'profit');
 
-CREATE TABLE accounting_accounts(
-    user_id TEXT PRIMARY KEY,
-    active BOOL NOT NULL,
-    role TEXT NOT NULL
-);
-
 CREATE TABLE transactions(
     log_id TEXT NOT NULL PRIMARY KEY,
     transaction_id TEXT NOT NULL,

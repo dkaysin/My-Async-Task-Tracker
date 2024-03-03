@@ -11,9 +11,6 @@ import (
 )
 
 func (er *EventReader) StartReaders(brokers []string, groupID string) {
-	topicReaderAccount := newTopicReader(brokers, groupID, accounting.KafkaTopicAccount)
-	go handle(context.Background(), topicReaderAccount, er.handleMessage)
-
 	topicReaderTask := newTopicReader(brokers, groupID, accounting.KafkaTopicTask)
 	go handle(context.Background(), topicReaderTask, er.handleMessage)
 }
@@ -28,10 +25,6 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 	slog.Info("parsed raw event", "event_name", eventRaw.EventName, "event_version", eventRaw.EventVersion, "event_producer", eventRaw.EventProducer)
 
 	switch eventRaw.EventName {
-	case schema.EventNameAccountCreated:
-		err = er.handleAccountCreated(eventRaw)
-	case schema.EventNameAccountUpdated:
-		err = er.handleAccountUpdated(eventRaw)
 	case schema.EventNameTaskAssigned:
 		err = er.handleTaskAssigned(eventRaw)
 	case schema.EventNameTaskCompleted:

@@ -17,6 +17,10 @@ type ProfitReportEntry struct {
 	Profit  int    `json:"profit"`
 }
 
+type RevenueSourceReport struct {
+	HighestRevenueItems map[string][]RevenueSourceReportEntry `json:"highest_revenue_items"`
+}
+
 type RevenueSourceReportEntry struct {
 	Revenue int    `json:"revenue"`
 	Source  string `json:"source"`
@@ -63,7 +67,7 @@ func (s *Service) GetProfitReport(ctx context.Context) ([]ProfitReportEntry, err
 	return entries, err
 }
 
-func (s *Service) GetRevenueSourceReport(ctx context.Context) (map[string][]RevenueSourceReportEntry, error) {
+func (s *Service) GetRevenueSourceReport(ctx context.Context) (RevenueSourceReport, error) {
 	var items []RevenueSourceReportItem
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
@@ -91,5 +95,5 @@ func (s *Service) GetRevenueSourceReport(ctx context.Context) (map[string][]Reve
 		}
 		entries[date] = append(itemsForDate, entry)
 	}
-	return entries, err
+	return RevenueSourceReport{entries}, err
 }
