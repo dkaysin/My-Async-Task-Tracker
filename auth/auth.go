@@ -15,7 +15,7 @@ const (
 
 // kafka
 const (
-	KafkaConsumerGroupID = "my-consumer-group-id"
+	KafkaConsumerGroupID = "consumer-group-auth"
 
 	KafkaTopicAccount = "Account"
 )
