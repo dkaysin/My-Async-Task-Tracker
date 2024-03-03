@@ -109,3 +109,14 @@ services:
     ports:
       - 4082:4080
     profiles: [all, pg_local, services]
+
+  accounting:
+    build:
+      context: .
+      dockerfile: analytics/Dockerfile
+    container_name: async-course-analytics
+    env_file:
+      - ./analytics/docker.env
+    ports:
+      - 4083:4080
+    profiles: [all, pg_local, services]
