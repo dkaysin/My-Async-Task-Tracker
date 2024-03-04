@@ -19,9 +19,6 @@ func NewEventReader(s *service.Service) *EventReader {
 	return &EventReader{s}
 }
 
-func (er *EventReader) StartReaders(brokers []string, groupID string) {
-}
-
 func newTopicReader(brokers []string, groupID string, topic string) *kafka.Reader {
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  brokers,

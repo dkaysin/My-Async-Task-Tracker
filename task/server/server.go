@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -77,6 +79,14 @@ func main() {
 	h.RegisterPublic(public)
 
 	api := e.Group("/api")
+	// parse jwt token into "user" context key
+	api.Use(echojwt.WithConfig(echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(task.JwtCustomClaims)
+		},
+		ErrorHandler: httpAPI.JwtMiddlewareErrorHandler,
+		SigningKey:   []byte(signingKey),
+	}))
 	h.RegisterAPI(api)
 
 	// set echo logger

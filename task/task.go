@@ -16,7 +16,7 @@ const (
 
 // kafka
 const (
-	KafkaConsumerGroupID = "my-consumer-group-id"
+	KafkaConsumerGroupID = "consumer-group-task"
 
 	KafkaTopicTask    = "Task"
 	KafkaTopicAccount = "Account"
@@ -25,7 +25,8 @@ const (
 // cross-package types
 
 type JwtCustomClaims struct {
-	Role string `json:"role"`
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -39,3 +40,9 @@ type Task struct {
 
 // errors
 var ErrPayloadValidationFailed = errors.New("payload validation failed")
+var ErrInvalidJwtClaimsFormat = errors.New("invalid jwt claims format")
+var ErrInsufficientPrivileges = errors.New("insufficient privileges")
+var ErrTokenNotFound = errors.New("token not found in request context")
+var ErrTaskNotFound = errors.New("task not found")
+var ErrNoDevelopersAvailable = errors.New("no developers available")
+var ErrUnknownUser = errors.New("unknown user")

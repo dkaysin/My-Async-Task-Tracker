@@ -1,7 +1,7 @@
 package main
 
 import (
-	global "async_course/auth"
+	"async_course/auth"
 	database "async_course/auth/internal/database"
 	reader "async_course/auth/internal/event_reader"
 	writer "async_course/auth/internal/event_writer"
@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -40,6 +42,13 @@ func main() {
 	config.SetDefault(kafkaBrokersEnvVar, defaultKafkaBrokersEnvVar)
 	config.SetDefault(pgConnStringEnvVar, defaultPgConnStringEnvVar)
 
+	// set signing key
+	signingKey := config.GetString(signingKeyEnvVar)
+	if signingKey == "" {
+		slog.Error("signing key not provided")
+		os.Exit(1)
+	}
+
 	// set database
 	db, err := database.NewDatabase(config.GetString(pgConnStringEnvVar))
 	if err != nil {
@@ -54,18 +63,30 @@ func main() {
 	defer ew.Close()
 
 	// set service
-	s := service.NewService(config, db, ew)
+	s := service.NewService(config, db, ew, signingKey)
 
 	// set event reader
 	er := reader.NewEventReader(s)
-	er.StartReaders(brokers, global.KafkaConsumerGroupID)
+	er.StartReaders(brokers, auth.KafkaConsumerGroupID)
 
 	// set http handler
 	h := httpAPI.NewHttpAPI(config, s)
 
 	// set server and API
 	e := echo.New()
+
+	public := e.Group("")
+	h.RegisterPublic(public)
+
 	api := e.Group("/api")
+	// parse jwt token into "user" context key
+	api.Use(echojwt.WithConfig(echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(auth.JwtCustomClaims)
+		},
+		ErrorHandler: httpAPI.JwtMiddlewareErrorHandler,
+		SigningKey:   []byte(signingKey),
+	}))
 	h.RegisterAPI(api)
 
 	// set echo logger
