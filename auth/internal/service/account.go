@@ -2,6 +2,7 @@ package service
 
 import (
 	"async_course/auth"
+
 	"context"
 
 	"github.com/google/uuid"
@@ -18,9 +19,9 @@ func (s *Service) CreateAccount(ctx context.Context, name, passwordHash, role st
 	if err != nil {
 		return "", err
 	}
-	event := auth.NewEventAccountCreated(userID, role)
-	s.ew.TopicWriterAccount.WriteJSON(event.Key, event.Value)
-	return userID, nil
+	message := s.ew.SchemaRegistry.V1.NewEventAccountCreated(userID, role)
+	err = s.ew.TopicWriterAccount.WriteMessage(message)
+	return userID, err
 }
 
 func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string) error {
@@ -37,7 +38,6 @@ func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string)
 	if err != nil {
 		return err
 	}
-	event := auth.NewEventAccountUpdated(userID, newRole, active)
-	s.ew.TopicWriterAccount.WriteJSON(event.Key, event.Value)
-	return nil
+	message := s.ew.SchemaRegistry.V1.NewEventAccountUpdated(userID, newRole, active)
+	return s.ew.TopicWriterAccount.WriteMessage(message)
 }

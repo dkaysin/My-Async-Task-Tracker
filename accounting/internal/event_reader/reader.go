@@ -47,7 +47,7 @@ func handle(ctx context.Context, r *kafka.Reader, fn messageHandler) {
 			slog.Error("error while reading message", "error", err)
 			break
 		}
-		slog.Info("received message from broker", "topic", r.Config().Topic, "key", string(m.Key), "value", string(m.Value))
+		slog.Info("received message from broker", "topic", r.Config().Topic)
 		if err := fn(m); err != nil {
 			slog.Error("error while handling message", "error", err)
 		}

@@ -1,0 +1,17 @@
+{
+  "name": "transaction_revenue",
+  "type": "record",
+  "namespace": "event.transaction",
+  "fields": [
+    { "name": "user_id", "type": ["string", "null"] },
+    { "name": "source", "type": "string" },
+    { "name": "revenue", "type": "int" },
+    {
+      "name": "created_at",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}

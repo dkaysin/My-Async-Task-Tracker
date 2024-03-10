@@ -1,25 +1,84 @@
 package event_reader
 
 import (
+	"async_course/accounting"
 	schema "async_course/schema_registry"
 
+	"context"
 	"log/slog"
 
 	"github.com/segmentio/kafka-go"
 )
 
 func (er *EventReader) StartReaders(brokers []string, groupID string) {
+	topicReaderTask := newTopicReader(brokers, groupID, schema.KafkaTopicTask)
+	go handle(context.Background(), topicReaderTask, er.handleMessage)
+
+	topicReaderAccount := newTopicReader(brokers, groupID, schema.KafkaTopicAccount)
+	go handle(context.Background(), topicReaderAccount, er.handleMessage)
 }
 
 func (er *EventReader) handleMessage(m kafka.Message) error {
-	var eventRaw schema.EventRaw
-	err := schema.UnmarshalAndValidate(schema.EventSchema, m.Value, &eventRaw)
-	if err != nil {
-		slog.Error("errorw while unmarshaling event", "err", err)
-		return err
+	eventName := getHeader(m, "event_name")
+	if eventName == "" {
+		return accounting.ErrMessageHeaderNotFound
 	}
+	eventVersion := getHeader(m, "event_version")
+	if eventVersion == "" {
+		return accounting.ErrMessageHeaderNotFound
+	}
+	slog.Info("received kafka message", "event_name", eventName, "event_version", eventVersion)
 
-	switch eventRaw.EventName {
+	var err error
+	switch eventName {
+	case schema.EventNameTaskAssigned:
+		switch eventVersion {
+		case "1":
+			err = er.handleTaskAssignedV1(m.Value)
+		case "2":
+			err = er.handleTaskAssignedV2(m.Value)
+		default:
+			err = accounting.ErrUnknownEventVersion
+		}
+	case schema.EventNameTaskCompleted:
+		switch eventVersion {
+		case "1":
+			err = er.handleTaskCompletedV1(m.Value)
+		case "2":
+			err = er.handleTaskCompletedV2(m.Value)
+		default:
+			err = accounting.ErrUnknownEventVersion
+		}
+	case schema.EventNameAccountCreated:
+		switch eventVersion {
+		case "1":
+			err = er.handleAccountCreatedV1(m.Value)
+		default:
+			err = accounting.ErrUnknownEventVersion
+		}
+	case schema.EventNameAccountUpdated:
+		switch eventVersion {
+		case "1":
+			err = er.handleAccountUpdatedV1(m.Value)
+		default:
+			err = accounting.ErrUnknownEventVersion
+		}
+	}
+	if err != nil {
+		slog.Error("error while handling message", "error", err)
+		if err := er.s.InsertIntoDLQ(m, err); err != nil {
+			slog.Error("error while inserting into DLQ", "error", err)
+		}
 	}
 	return err
+}
+
+func getHeader(m kafka.Message, key string) string {
+	for _, header := range m.Headers {
+		if header.Key == key {
+			return string(header.Value)
+		}
+	}
+	slog.Error("header not found in kafka message", "key", key)
+	return ""
 }

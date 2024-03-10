@@ -1,0 +1,9 @@
+{
+  "name": "account_created",
+  "type": "record",
+  "namespace": "event.account",
+  "fields": [
+    { "name": "user_id", "type": "string" },
+    { "name": "role", "type": "string" }
+  ]
+}

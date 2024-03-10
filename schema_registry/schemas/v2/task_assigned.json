@@ -1,0 +1,9 @@
+{
+  "name": "task_assigned",
+  "type": "record",
+  "namespace": "event.task",
+  "fields": [
+    { "name": "task", "type": "task" },
+    { "name": "old_user_id", "type": ["string", "null"] }
+  ]
+}

@@ -14,11 +14,8 @@ const (
 )
 
 // kafka
-const (
-	KafkaConsumerGroupID = "consumer-group-auth"
-
-	KafkaTopicAccount = "Account"
-)
+const KafkaConsumerGroupID = "consumer-group-auth"
+const ProducerName = "Auth"
 
 // cross-package types
 

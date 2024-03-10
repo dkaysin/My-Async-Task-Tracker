@@ -15,12 +15,8 @@ const (
 )
 
 // kafka
-const (
-	KafkaConsumerGroupID = "consumer-group-task"
-
-	KafkaTopicTask    = "Task"
-	KafkaTopicAccount = "Account"
-)
+const KafkaConsumerGroupID = "consumer-group-task"
+const ProducerName = "Task"
 
 // cross-package types
 
@@ -34,6 +30,7 @@ type Task struct {
 	TaskID      string    `json:"task_id"`
 	UserID      string    `json:"user_id"`
 	Description string    `json:"description"`
+	JiraID      string    `json:"jira_id"`
 	Completed   bool      `json:"completed"`
 	CreatedAt   time.Time `json:"created_at"`
 }
@@ -46,3 +43,5 @@ var ErrTokenNotFound = errors.New("token not found in request context")
 var ErrTaskNotFound = errors.New("task not found")
 var ErrNoDevelopersAvailable = errors.New("no developers available")
 var ErrUnknownUser = errors.New("unknown user")
+var ErrMessageHeaderNotFound = errors.New("required kafka message header not found")
+var ErrUnknownEventVersion = errors.New("unknown event version")

@@ -4,3 +4,4 @@ use ./auth
 use ./task
 use ./accounting
 use ./analytics
+use ./schema_registry

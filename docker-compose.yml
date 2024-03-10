@@ -37,13 +37,13 @@ services:
     depends_on:
       - zoo1
     profiles: [all, pg_local, kafka]
-  
+
   init-kafka:
     image: confluentinc/cp-kafka:7.3.2
     container_name: async-course-init-kafka
     depends_on:
       - kafka1
-    entrypoint: [ '/bin/sh', '-c' ]
+    entrypoint: ["/bin/sh", "-c"]
     command: |
       "
       # blocks until kafka is reachable
@@ -52,12 +52,14 @@ services:
       echo -e 'Creating kafka topics'
       kafka-topics --bootstrap-server kafka1:29092 --create --if-not-exists --topic Account --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server kafka1:29092 --create --if-not-exists --topic Task --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka1:29092 --create --if-not-exists --topic Transaction --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka1:29092 --create --if-not-exists --topic Payment --replication-factor 1 --partitions 1
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka1:29092 --list
       "
     profiles: [all, pg_local, kafka]
-  
+
   db:
     image: postgres:alpine
     restart: always
@@ -79,8 +81,8 @@ services:
 
   auth:
     build:
-      context: ./auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: auth/Dockerfile
     container_name: async-course-auth
     env_file:
       - ./auth/docker.env
@@ -90,8 +92,8 @@ services:
 
   task:
     build:
-      context: ./task
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: task/Dockerfile
     container_name: async-course-task
     env_file:
       - ./task/docker.env
@@ -110,7 +112,7 @@ services:
       - 4082:4080
     profiles: [all, pg_local, services]
 
-  accounting:
+  analytics:
     build:
       context: .
       dockerfile: analytics/Dockerfile

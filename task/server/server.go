@@ -1,12 +1,14 @@
 package main
 
 import (
+	schema "async_course/schema_registry"
 	"async_course/task"
 	database "async_course/task/internal/database"
 	reader "async_course/task/internal/event_reader"
 	writer "async_course/task/internal/event_writer"
 	httpAPI "async_course/task/internal/http_api"
 	service "async_course/task/internal/service"
+
 	"log/slog"
 	"os"
 	"strings"
@@ -57,16 +59,19 @@ func main() {
 	}
 	defer db.Close()
 
+	// set schema registry
+	sr := schema.NewSchemaRegistry(task.ProducerName)
+
 	// set event writer
 	brokers := strings.Split(config.GetString(kafkaBrokersEnvVar), ",")
-	ew := writer.NewEventWriter(brokers)
+	ew := writer.NewEventWriter(brokers, sr)
 	defer ew.Close()
 
 	// set service
 	s := service.NewService(config, db, ew, signingKey)
 
 	// set event reader
-	er := reader.NewEventReader(s)
+	er := reader.NewEventReader(s, sr)
 	er.StartReaders(brokers, task.KafkaConsumerGroupID)
 
 	// set http handler

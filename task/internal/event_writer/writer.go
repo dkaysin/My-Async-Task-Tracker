@@ -1,12 +1,15 @@
 package event_writer
 
 import (
+	schema "async_course/schema_registry"
+	general "async_course/schema_registry/schemas/general"
+
 	"context"
-	"encoding/json"
 	"log/slog"
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/protocol"
 )
 
 type TopicWriter struct {
@@ -23,32 +26,50 @@ func newTopicWriter(brokers []string, topic string) *TopicWriter {
 	}}
 }
 
-func (tr *TopicWriter) WriteBytes(key string, value []byte) error {
+func (tr *TopicWriter) WriteBytes(meta general.Meta, key string, value []byte) error {
 	ctx := context.Background()
 	go func(ctx context.Context, key string, value []byte) {
 		err := tr.w.WriteMessages(ctx, kafka.Message{
 			Key:   []byte(key),
-			Value: []byte(value),
+			Value: value,
+			Headers: []protocol.Header{
+				{
+					Key:   "event_name",
+					Value: []byte(meta.EventName),
+				},
+				{
+					Key:   "event_version",
+					Value: []byte(meta.EventVersion),
+				},
+				{
+					Key:   "event_producer",
+					Value: []byte(meta.EventProducer),
+				},
+				{
+					Key:   "event_id",
+					Value: []byte(meta.EventID),
+				},
+			},
 		})
 		if err != nil {
-			slog.Error("failed to write message", "topic", tr.w.Topic, "key", key, "value", value, "error", err)
 			return
 		}
-		slog.Info("written message", "topic", tr.w.Topic, "key", key, "value", value)
 
 	}(ctx, key, value)
 	return nil
 }
 
-func (tr *TopicWriter) WriteString(key string, value string) error {
-	return tr.WriteBytes(key, []byte(value))
-}
-
-func (tr *TopicWriter) WriteJSON(key string, value any) error {
-	valueBytes, err := json.Marshal(value)
+func (tr *TopicWriter) WriteMessage(m schema.Message) error {
+	payloadBytes, err := schema.MarshalAndValidate(m.PayloadSchema, m.Payload)
 	if err != nil {
-		slog.Error("failed to marshall payload", "topic", tr.w.Topic, "key", key, "value", value, "error", err)
+		slog.Error("failed to marshall payload", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Meta.EventName, "event_version", m.Meta.EventVersion, "error", err)
 		return err
 	}
-	return tr.WriteBytes(key, valueBytes)
+	err = tr.WriteBytes(m.Meta, m.Key, payloadBytes)
+	if err != nil {
+		slog.Error("error while writing message", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Meta.EventName, "event_version", m.Meta.EventVersion, "error", err)
+		return err
+	}
+	slog.Info("written message", "topic", tr.w.Topic, "key", m.Key, "event_name", m.Meta.EventName, "event_version", m.Meta.EventVersion)
+	return nil
 }
