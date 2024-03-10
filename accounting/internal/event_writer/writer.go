@@ -2,6 +2,7 @@ package event_writer
 
 import (
 	schema "async_course/schema_registry"
+	general "async_course/schema_registry/schemas/general"
 
 	"context"
 	"log/slog"
@@ -25,7 +26,7 @@ func newTopicWriter(brokers []string, topic string) *TopicWriter {
 	}}
 }
 
-func (tr *TopicWriter) WriteBytes(meta schema.Meta, key string, value []byte) error {
+func (tr *TopicWriter) WriteBytes(meta general.Meta, key string, value []byte) error {
 	ctx := context.Background()
 	go func(ctx context.Context, key string, value []byte) {
 		err := tr.w.WriteMessages(ctx, kafka.Message{

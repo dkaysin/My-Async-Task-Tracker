@@ -1,8 +1,9 @@
 package service
 
 import (
-	schema "async_course/schema_registry"
+	v2 "async_course/schema_registry/schemas/v2"
 	"async_course/task"
+	"strings"
 
 	"context"
 	"math/rand/v2"
@@ -20,7 +21,7 @@ func (s *Service) GetTasksForAccount(ctx context.Context, userID string) ([]task
 	var tasks []task.Task
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `SELECT task_id, user_id, description, completed, created_at FROM tasks WHERE user_id = $1`
+		q := `SELECT task_id, user_id, description, jira_id, completed, created_at FROM tasks WHERE user_id = $1`
 		rows, err := tx.Query(ctx, q, userID)
 		if err != nil {
 			return err
@@ -38,6 +39,8 @@ func (s *Service) GetTasksForAccount(ctx context.Context, userID string) ([]task
 func (s *Service) CreateTask(ctx context.Context, description string) (string, *string, error) {
 	taskID := uuid.New().String()
 
+	description, jiraID := parseDescription(description)
+
 	userIDs, err := s.getActiveAccountsByRole(ctx, task.RoleDeveloper)
 	if err != nil {
 		return "", nil, err
@@ -49,9 +52,9 @@ func (s *Service) CreateTask(ctx context.Context, description string) (string, *
 
 	var createdTask task.Task
 	err = s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
-		q := `INSERT INTO tasks (task_id, user_id, description, completed) VALUES ($1, $2, $3, False)
-			RETURNING task_id, user_id, description, completed, created_at`
-		rows, err := tx.Query(ctx, q, taskID, userID, description)
+		q := `INSERT INTO tasks (task_id, user_id, description, jira_id, completed) VALUES ($1, $2, $3, $4, False)
+			RETURNING task_id, user_id, description, jira_id, completed, created_at`
+		rows, err := tx.Query(ctx, q, taskID, userID, description, jiraID)
 		if err != nil {
 			return err
 		}
@@ -63,7 +66,7 @@ func (s *Service) CreateTask(ctx context.Context, description string) (string, *
 		return "", nil, err
 	}
 	if userID != nil {
-		message := s.ew.SchemaRegistry.V1.NewEventTaskAssigned(schema.Task(createdTask), nil)
+		message := s.ew.SchemaRegistry.V2.NewEventTaskAssigned(v2.Task(createdTask), nil)
 		err = s.ew.TopicWriterTask.WriteMessage(message)
 	}
 	return taskID, userID, err
@@ -73,7 +76,7 @@ func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error
 	var completedTask task.Task
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		q := `UPDATE tasks SET completed = True, updated_at = NOW() WHERE task_id = $1 AND user_id = $2 AND completed = False
-			RETURNING task_id, user_id, description, completed, created_at`
+			RETURNING task_id, user_id, description, jira_id, completed, created_at`
 		rows, err := tx.Query(ctx, q, taskID, userID)
 		if err != nil {
 			return err
@@ -88,7 +91,7 @@ func (s *Service) CompleteTask(ctx context.Context, taskID, userID string) error
 	if err != nil {
 		return err
 	}
-	message := s.ew.SchemaRegistry.V1.NewEventTaskCompleted(schema.Task(completedTask))
+	message := s.ew.SchemaRegistry.V2.NewEventTaskCompleted(v2.Task(completedTask))
 	return s.ew.TopicWriterTask.WriteMessage(message)
 }
 
@@ -125,7 +128,7 @@ func (s *Service) AssignTasks(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		message := s.ew.SchemaRegistry.V1.NewEventTaskAssigned(schema.Task(assignedTask), taskUserID.UserID)
+		message := s.ew.SchemaRegistry.V2.NewEventTaskAssigned(v2.Task(assignedTask), taskUserID.UserID)
 		err = s.ew.TopicWriterTask.WriteMessage(message)
 		if err != nil {
 			return err
@@ -155,7 +158,7 @@ func (s *Service) getNonCompletedTasks(ctx context.Context) ([]TaskUserID, error
 
 func (s *Service) assignTaskTx(tx pgx.Tx, ctx context.Context, taskID, userID string) (task.Task, error) {
 	q := `UPDATE tasks SET user_id = $2, updated_at = NOW() WHERE task_id = $1
-		RETURNING task_id, user_id, description, completed, created_at`
+		RETURNING task_id, user_id, description, jira_id, completed, created_at`
 	rows, err := tx.Query(ctx, q, taskID, userID)
 	if err != nil {
 		return task.Task{}, err
@@ -166,4 +169,24 @@ func (s *Service) assignTaskTx(tx pgx.Tx, ctx context.Context, taskID, userID st
 		return assignedTask, pgx.ErrNoRows
 	}
 	return assignedTask, err
+}
+
+func parseDescription(xs string) (string, string) {
+	var start, end int
+	for i, s := range xs {
+		if s == '[' {
+			start = i
+		}
+		if s == ']' {
+			end = i
+		}
+	}
+	if start >= end {
+		return xs, ""
+	}
+	description := xs[:start] + xs[end+1:]
+	jiraID := xs[start+1 : end]
+	jiraID = strings.TrimSpace(jiraID)
+	description = strings.TrimSpace(description)
+	return description, jiraID
 }

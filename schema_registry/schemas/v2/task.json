@@ -1,0 +1,19 @@
+{
+  "name": "task",
+  "type": "record",
+  "namespace": "event.task",
+  "fields": [
+    { "name": "task_id", "type": "string" },
+    { "name": "user_id", "type": "string" },
+    { "name": "description", "type": "string" },
+    { "name": "jira_id", "type": "string" },
+    { "name": "completed", "type": "boolean" },
+    {
+      "name": "created_at",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}

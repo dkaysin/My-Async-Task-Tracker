@@ -34,14 +34,18 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 	case schema.EventNameTaskAssigned:
 		switch eventVersion {
 		case "1":
-			err = er.handleTaskAssigned(m.Value)
+			err = er.handleTaskAssignedV1(m.Value)
+		case "2":
+			err = er.handleTaskAssignedV2(m.Value)
 		default:
 			err = accounting.ErrUnknownEventVersion
 		}
 	case schema.EventNameTaskCompleted:
 		switch eventVersion {
 		case "1":
-			err = er.handleTaskCompleted(m.Value)
+			err = er.handleTaskCompletedV1(m.Value)
+		case "2":
+			err = er.handleTaskCompletedV2(m.Value)
 		default:
 			err = accounting.ErrUnknownEventVersion
 		}

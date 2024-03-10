@@ -30,6 +30,7 @@ type Task struct {
 	TaskID      string    `json:"task_id"`
 	UserID      string    `json:"user_id"`
 	Description string    `json:"description"`
+	JiraID      string    `json:"jira_id"`
 	Completed   bool      `json:"completed"`
 	CreatedAt   time.Time `json:"created_at"`
 }

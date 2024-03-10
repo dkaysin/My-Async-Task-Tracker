@@ -52,6 +52,8 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 		switch eventVersion {
 		case "1":
 			err = er.handleTaskUpdatedV1(m.Value)
+		case "2":
+			err = er.handleTaskUpdatedV2(m.Value)
 		default:
 			err = analytics.ErrUnknownEventVersion
 		}
@@ -59,6 +61,8 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 		switch eventVersion {
 		case "1":
 			err = er.handleTaskUpdatedV1(m.Value)
+		case "2":
+			err = er.handleTaskUpdatedV2(m.Value)
 		default:
 			err = analytics.ErrUnknownEventVersion
 		}

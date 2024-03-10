@@ -11,6 +11,7 @@ import (
 
 type SchemaRegistry struct {
 	V1 SchemaV1
+	V2 SchemaV2
 }
 
 type SchemaV1 struct {
@@ -25,9 +26,17 @@ type SchemaV1 struct {
 	TransactionCostSchema    avro.Schema
 }
 
+type SchemaV2 struct {
+	Producer            string
+	Version             string
+	TaskAssignedSchema  avro.Schema
+	TaskCompletedSchema avro.Schema
+}
+
 func NewSchemaRegistry(producer string) *SchemaRegistry {
 	return &SchemaRegistry{
 		V1: NewSchemaV1(producer),
+		V2: NewSchemaV2(producer),
 	}
 }
 
@@ -45,9 +54,18 @@ func NewSchemaV1(producer string) SchemaV1 {
 	}
 }
 
+func NewSchemaV2(producer string) SchemaV2 {
+	return SchemaV2{
+		Producer:            producer,
+		Version:             "2",
+		TaskAssignedSchema:  mustReadSchemaWithDeps("v2/task_assigned.json", "", map[string]string{"task": "v2/task.json"}),
+		TaskCompletedSchema: mustReadSchemaWithDeps("v2/task_completed.json", "", map[string]string{"task": "v2/task.json"}),
+	}
+}
+
 const schemaFilesPrefix = "schemas/"
 
-//go:embed schemas/v1/*.json
+//go:embed schemas/v1/*.json schemas/v2/*.json
 var f embed.FS
 
 func MarshalAndValidate(schema avro.Schema, v interface{}) ([]byte, error) {

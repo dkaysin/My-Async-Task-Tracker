@@ -31,14 +31,14 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 	case schema.EventNameAccountCreated:
 		switch eventVersion {
 		case "1":
-			err = er.handleAccountCreated(m.Value)
+			err = er.handleAccountCreatedV1(m.Value)
 		default:
 			err = task.ErrUnknownEventVersion
 		}
 	case schema.EventNameAccountUpdated:
 		switch eventVersion {
 		case "1":
-			err = er.handleAccountUpdated(m.Value)
+			err = er.handleAccountUpdatedV1(m.Value)
 		default:
 			err = task.ErrUnknownEventVersion
 		}
