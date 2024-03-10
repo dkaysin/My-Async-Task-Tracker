@@ -40,3 +40,10 @@ CREATE TABLE accounting_tasks(
     completed BOOL NOT NULL DEFAULT False,
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE accounting_dlq(
+    message_headers TEXT,
+    message_key TEXT,
+    message_value BYTEA,
+    error TEXT
+);

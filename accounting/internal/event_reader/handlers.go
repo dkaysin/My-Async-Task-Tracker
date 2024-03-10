@@ -62,6 +62,9 @@ func (er *EventReader) handleMessage(m kafka.Message) error {
 	}
 	if err != nil {
 		slog.Error("error while handling message", "error", err)
+		if err := er.s.InsertIntoDLQ(m, err); err != nil {
+			slog.Error("error while inserting into DLQ", "error", err)
+		}
 	}
 	return err
 }
