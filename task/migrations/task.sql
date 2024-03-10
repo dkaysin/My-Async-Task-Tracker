@@ -5,7 +5,8 @@
 CREATE TABLE task_accounts(
     user_id TEXT PRIMARY KEY,
     active BOOL NOT NULL,
-    role TEXT NOT NULL
+    role TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE tasks(
@@ -16,3 +17,4 @@ CREATE TABLE tasks(
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+

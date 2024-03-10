@@ -10,3 +10,17 @@ CREATE TABLE analytics(
     created_at TIMESTAMP NOT NULL
 );
 
+CREATE TABLE analytics_accounts(
+    user_id TEXT PRIMARY KEY,
+    active BOOL NOT NULL,
+    role TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE analytics_tasks(
+    task_id TEXT PRIMARY KEY,
+    user_id TEXT,
+    description TEXT NOT NULL,
+    completed BOOL NOT NULL DEFAULT False,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -63,7 +62,7 @@ func (s *Service) ProcessAssignTask(ctx context.Context, userID, taskID string) 
 		slog.Error("unable to process assign task transaction", "user_id", userID, "error", err)
 		return err
 	}
-	message := s.ew.SchemaRegistry.NewEventTransactionRevenue(res.UserID, res.Source, res.Amount, res.CreatedAt)
+	message := s.ew.SchemaRegistry.V1.NewEventTransactionRevenue(res.UserID, res.Source, res.Amount, res.CreatedAt)
 	return s.ew.TopicWriterTransaction.WriteMessage(message)
 }
 
@@ -79,7 +78,7 @@ func (s *Service) ProcessCompleteTask(ctx context.Context, userID, taskID string
 		slog.Error("unable to process complete task transaction", "user_id", userID, "error", err)
 		return err
 	}
-	message := s.ew.SchemaRegistry.NewEventTransactionCost(res.UserID, res.Source, res.Amount, res.CreatedAt)
+	message := s.ew.SchemaRegistry.V1.NewEventTransactionCost(res.UserID, res.Source, res.Amount, res.CreatedAt)
 	return s.ew.TopicWriterTransaction.WriteMessage(message)
 }
 
@@ -122,7 +121,7 @@ func (s *Service) ProcessCloseBalances(ctx context.Context) error {
 	}
 	// send event messages for payments made
 	for _, user := range processedUsers {
-		message := s.ew.SchemaRegistry.NewEventPaymentMade(user.UserID, user.Amount, user.Timestamp)
+		message := s.ew.SchemaRegistry.V1.NewEventPaymentMade(user.UserID, user.Amount, user.Timestamp)
 		err = s.ew.TopicWriterPayment.WriteMessage(message)
 		if err != nil {
 			slog.Error("error while sending payment message", "user_id", user.UserID, "processed_at", user.Timestamp, "error", err)
@@ -138,7 +137,7 @@ func newAssignTaskTransaction(userID, taskID string) transaction {
 		BalanceTypeDebit:  balanceTypeAccounts,
 		BalanceTypeCredit: balanceTypeProfit,
 		UserID:            &userID,
-		Source:            fmt.Sprintf("task_assigned_%s", taskID),
+		Source:            taskID,
 		Amount:            priceAssignTask(),
 	}
 }
@@ -149,7 +148,7 @@ func newCompleteTaskTransacion(userID, taskID string) transaction {
 		BalanceTypeDebit:  balanceTypeProfit,
 		BalanceTypeCredit: balanceTypeAccounts,
 		UserID:            &userID,
-		Source:            fmt.Sprintf("task_completed_%s", taskID),
+		Source:            taskID,
 		Amount:            priceCompleteTask(),
 	}
 }

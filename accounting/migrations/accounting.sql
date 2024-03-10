@@ -26,3 +26,17 @@ CREATE TABLE balances(
 
 CREATE INDEX balances_balance_type_user_id_idx ON balances(balance_type, user_id);
 
+CREATE TABLE accounting_accounts(
+    user_id TEXT PRIMARY KEY,
+    active BOOL NOT NULL,
+    role TEXT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE accounting_tasks(
+    task_id TEXT PRIMARY KEY,
+    user_id TEXT,
+    description TEXT NOT NULL,
+    completed BOOL NOT NULL DEFAULT False,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

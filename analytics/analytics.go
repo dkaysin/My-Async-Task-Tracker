@@ -14,15 +14,7 @@ const (
 )
 
 // kafka
-const (
-	KafkaConsumerGroupID = "consumer-group-analytics"
-
-	KafkaTopicTask        = "Task"
-	KafkaTopicAccount     = "Account"
-	KafkaTopicPayment     = "Payment"
-	KafkaTopicTransaction = "Transaction"
-)
-
+const KafkaConsumerGroupID = "consumer-group-analytics"
 const ProducerName = "Analytics"
 
 // cross-package types
@@ -41,3 +33,5 @@ var ErrTokenNotFound = errors.New("token not found in request context")
 var ErrTaskNotFound = errors.New("task not found")
 var ErrNoDevelopersAvailable = errors.New("no developers available")
 var ErrUnknownUser = errors.New("unknown user")
+var ErrMessageHeaderNotFound = errors.New("required kafka message header not found")
+var ErrUnknownEventVersion = errors.New("unknown event version")

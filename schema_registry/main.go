@@ -10,7 +10,12 @@ import (
 )
 
 type SchemaRegistry struct {
+	V1 SchemaV1
+}
+
+type SchemaV1 struct {
 	Producer                 string
+	Version                  string
 	AccountCreatedSchema     avro.Schema
 	AccountUpdatedSchema     avro.Schema
 	TaskAssignedSchema       avro.Schema
@@ -22,23 +27,28 @@ type SchemaRegistry struct {
 
 func NewSchemaRegistry(producer string) *SchemaRegistry {
 	return &SchemaRegistry{
+		V1: NewSchemaV1(producer),
+	}
+}
+
+func NewSchemaV1(producer string) SchemaV1 {
+	return SchemaV1{
 		Producer:                 producer,
-		AccountCreatedSchema:     mustReadSchema("account_created.json"),
-		AccountUpdatedSchema:     mustReadSchema("account_updated.json"),
-		TaskAssignedSchema:       mustReadSchemaWithDeps("task_assigned.json", "", map[string]string{"task": "task.json"}),
-		TaskCompletedSchema:      mustReadSchemaWithDeps("task_completed.json", "", map[string]string{"task": "task.json"}),
-		PaymentMadeSchema:        mustReadSchema("payment_made.json"),
-		TransactionRevenueSchema: mustReadSchema("transaction_revenue.json"),
-		TransactionCostSchema:    mustReadSchema("transaction_cost.json"),
+		Version:                  "1",
+		AccountCreatedSchema:     mustReadSchema("v1/account_created.json"),
+		AccountUpdatedSchema:     mustReadSchema("v1/account_updated.json"),
+		TaskAssignedSchema:       mustReadSchemaWithDeps("v1/task_assigned.json", "", map[string]string{"task": "v1/task.json"}),
+		TaskCompletedSchema:      mustReadSchemaWithDeps("v1/task_completed.json", "", map[string]string{"task": "v1/task.json"}),
+		PaymentMadeSchema:        mustReadSchema("v1/payment_made.json"),
+		TransactionRevenueSchema: mustReadSchema("v1/transaction_revenue.json"),
+		TransactionCostSchema:    mustReadSchema("v1/transaction_cost.json"),
 	}
 }
 
 const schemaFilesPrefix = "schemas/"
 
-//go:embed schemas/*.json
+//go:embed schemas/v1/*.json
 var f embed.FS
-
-var EventRawSchema = mustReadSchema("event_raw.json")
 
 func MarshalAndValidate(schema avro.Schema, v interface{}) ([]byte, error) {
 	bytes, err := avro.Marshal(schema, v)

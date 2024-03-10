@@ -6,7 +6,7 @@ import (
 	"context"
 )
 
-func (er *EventReader) handleAccountCreated(payload []byte) error {
+func (er *EventReader) handleAccountCreatedV1(payload []byte) error {
 	var event schema.AccountCreated
 	err := schema.UnmarshalAndValidate(er.SchemaRegistry.V1.AccountCreatedSchema, payload, &event)
 	if err != nil {
@@ -15,7 +15,7 @@ func (er *EventReader) handleAccountCreated(payload []byte) error {
 	return er.s.UpsertAccountRole(context.Background(), event.UserID, true, event.Role)
 }
 
-func (er *EventReader) handleAccountUpdated(payload []byte) error {
+func (er *EventReader) handleAccountUpdatedV1(payload []byte) error {
 	var event schema.AccountUpdated
 	err := schema.UnmarshalAndValidate(er.SchemaRegistry.V1.AccountUpdatedSchema, payload, &event)
 	if err != nil {

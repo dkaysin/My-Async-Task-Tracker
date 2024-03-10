@@ -22,9 +22,10 @@ type RevenueSourceReport struct {
 }
 
 type RevenueSourceReportEntry struct {
-	Revenue int    `json:"revenue"`
-	Source  string `json:"source"`
-	UserID  string `json:"user_id"`
+	Revenue     int     `json:"revenue"`
+	Source      string  `json:"source"`
+	Description *string `json:"description"`
+	UserID      string  `json:"user_id"`
 }
 
 type RevenueSourceReportItem struct {
@@ -71,11 +72,18 @@ func (s *Service) GetRevenueSourceReport(ctx context.Context) (RevenueSourceRepo
 	var items []RevenueSourceReportItem
 	err := s.db.ExecuteTx(ctx, func(tx pgx.Tx) error {
 		var err error
-		q := `WITH t AS(
-                SELECT TO_CHAR(created_at, 'YYYY-MM-DD') AS date, revenue, source, user_id,
-                MAX(revenue) OVER (PARTITION BY TO_CHAR(created_at, 'YYYY-MM-DD')) AS max_revenue
-                FROM analytics)
-            SELECT date, revenue, source, user_id FROM t
+		q := `WITH t AS (
+                SELECT
+                    TO_CHAR(a.created_at, 'YYYY-MM-DD') AS date,
+                    a.revenue,
+                    a.source,
+                    t.description,
+                    a.user_id,
+                    MAX(a.revenue) OVER (PARTITION BY TO_CHAR(a.created_at, 'YYYY-MM-DD')) AS max_revenue
+                FROM analytics a
+                LEFT JOIN analytics_tasks t ON a.source = t.task_id
+            )
+            SELECT date, revenue, source, description, user_id FROM t
             WHERE revenue = max_revenue`
 		rows, err := tx.Query(ctx, q)
 		if err != nil {

@@ -2,7 +2,6 @@ package event_writer
 
 import (
 	schema "async_course/schema_registry"
-	"async_course/task"
 
 	"log/slog"
 	"os"
@@ -15,7 +14,7 @@ type EventWriter struct {
 
 func NewEventWriter(brokers []string, sr *schema.SchemaRegistry) *EventWriter {
 	return &EventWriter{
-		TopicWriterTask: newTopicWriter(brokers, task.KafkaTopicTask),
+		TopicWriterTask: newTopicWriter(brokers, schema.KafkaTopicTask),
 		SchemaRegistry:  sr,
 	}
 }

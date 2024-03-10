@@ -6,20 +6,20 @@ import (
 	"context"
 )
 
-func (er *EventReader) handleTransactionRevenue(e schema.EventRaw) error {
-	var payload schema.TransactionRevenue
-	err := schema.UnmarshalAndValidate(er.SchemaRegistry.TransactionRevenueSchema, e.Payload, &payload)
+func (er *EventReader) handleTransactionRevenueV1(payload []byte) error {
+	var event schema.TransactionRevenue
+	err := schema.UnmarshalAndValidate(er.SchemaRegistry.V1.TransactionRevenueSchema, payload, &event)
 	if err != nil {
 		return err
 	}
-	return er.s.ProcessTaskAssigned(context.Background(), payload.UserID, payload.Source, payload.Revenue, payload.CreatedAt)
+	return er.s.ProcessTaskAssigned(context.Background(), event.UserID, event.Source, event.Revenue, event.CreatedAt)
 }
 
-func (er *EventReader) handleTransactionCost(e schema.EventRaw) error {
-	var payload schema.TransactionCost
-	err := schema.UnmarshalAndValidate(er.SchemaRegistry.TransactionCostSchema, e.Payload, &payload)
+func (er *EventReader) handleTransactionCostV1(payload []byte) error {
+	var event schema.TransactionCost
+	err := schema.UnmarshalAndValidate(er.SchemaRegistry.V1.TransactionCostSchema, payload, &event)
 	if err != nil {
 		return err
 	}
-	return er.s.ProcessTaskCompleted(context.Background(), payload.UserID, payload.Source, payload.Cost, payload.CreatedAt)
+	return er.s.ProcessTaskCompleted(context.Background(), event.UserID, event.Source, event.Cost, event.CreatedAt)
 }

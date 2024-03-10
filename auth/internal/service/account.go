@@ -19,7 +19,7 @@ func (s *Service) CreateAccount(ctx context.Context, name, passwordHash, role st
 	if err != nil {
 		return "", err
 	}
-	message := s.ew.SchemaRegistry.NewEventAccountCreated(userID, role)
+	message := s.ew.SchemaRegistry.V1.NewEventAccountCreated(userID, role)
 	err = s.ew.TopicWriterAccount.WriteMessage(message)
 	return userID, err
 }
@@ -38,6 +38,6 @@ func (s *Service) ChangeAccountRole(ctx context.Context, userID, newRole string)
 	if err != nil {
 		return err
 	}
-	message := s.ew.SchemaRegistry.NewEventAccountUpdated(userID, newRole, active)
+	message := s.ew.SchemaRegistry.V1.NewEventAccountUpdated(userID, newRole, active)
 	return s.ew.TopicWriterAccount.WriteMessage(message)
 }

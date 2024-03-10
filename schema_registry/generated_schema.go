@@ -19,15 +19,6 @@ type AccountUpdated struct {
 	Role   string `avro:"role"`
 }
 
-// EventRaw is a generated struct.
-type EventRaw struct {
-	EventName     string `avro:"event_name"`
-	EventID       string `avro:"event_id"`
-	EventVersion  string `avro:"event_version"`
-	EventProducer string `avro:"event_producer"`
-	Payload       []byte `avro:"payload"`
-}
-
 // Meta is a generated struct.
 type Meta struct {
 	EventName     string `avro:"event_name"`

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"async_course/accounting"
 	"context"
 	"time"
 
@@ -36,6 +37,9 @@ func (s *Service) GetBalanceSummary(ctx context.Context, userID string) (Balance
 		}
 		defer rows.Close()
 		balanceSummary, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[BalanceSummary])
+		if err == pgx.ErrNoRows {
+			return accounting.ErrUnknownUser
+		}
 		return err
 	})
 	return balanceSummary, err
